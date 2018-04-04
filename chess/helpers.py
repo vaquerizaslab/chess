@@ -221,7 +221,7 @@ def sub_matrix_regions(hic_matrix, regions, region):
     return np.copy(hic_matrix[start_ix:end_ix+1, start_ix:end_ix+1]), sr
 
 
-def _edges_from_sparse_matrix(file_name, ix_converter=None, sep="\t"):
+def edges_from_sparse_matrix(file_name, ix_converter=None, sep="\t"):
     with open(file_name, 'r') as f:
         for line in f:
             if line.startswith("#"):
@@ -243,7 +243,7 @@ def _edges_from_sparse_matrix(file_name, ix_converter=None, sep="\t"):
 
 
 def load_sparse_matrix(file_name, ix_converter=None, sep="\t"):
-    return list(_edges_from_sparse_matrix(file_name, ix_converter, sep))
+    return list(edges_from_sparse_matrix(file_name, ix_converter, sep))
 
 
 def load_matrix(file_name, size=None, sep=None, ix_converter=None):
@@ -257,7 +257,7 @@ def load_matrix(file_name, size=None, sep=None, ix_converter=None):
         raise ValueError("Must provide matrix size!")
 
     m = np.zeros((size, size))
-    for source, sink, weight in _edges_from_sparse_matrix(file_name, ix_converter=ix_converter, sep=sep):
+    for source, sink, weight in edges_from_sparse_matrix(file_name, ix_converter=ix_converter, sep=sep):
         m[source, sink] = weight
         m[sink, source] = weight
 
