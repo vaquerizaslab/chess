@@ -4,16 +4,6 @@ from future.utils import string_types
 from .helpers import load_regions, load_sparse_matrix
 
 
-def _mappability(regions, sparse_matrix):
-    mappable = [False] * len(regions)
-
-    for source, sink, _ in sparse_matrix:
-        mappable[source] = True
-        mappable[sink] = True
-
-    return mappable
-
-
 def _chromosome_bins(regions):
     chr_bins = {}
     for r in regions:
@@ -30,6 +20,7 @@ def possible_contacts(regions, mappability):
     for r in regions:
         if r.chromosome != current_chromosome:
             chromosomes.append(r.chromosome)
+        current_chromosome = r.chromosome
 
     cb = _chromosome_bins(regions)
     chromosome_max_distance = defaultdict(int)
@@ -122,7 +113,7 @@ def expected_values(regions, sparse_matrix, selected_chromosome=None):
             intra_sums[distance] += weight
             chromosome_intra_sums[source_chromosome][distance] += weight
 
-    mappability = _mappability(regions, sparse_matrix)
+    mappability = [m > 0 for m in marginals]
     intra_total, chromosome_intra_total, inter_total = possible_contacts(regions, mappability)
 
     # expected values
