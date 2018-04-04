@@ -410,7 +410,8 @@ def post_process_simple(raw_results):
     return rows
 
 
-def cleanup(basenames, reference_ID='REF', query_ID='QRY', work_dir='./'):
+def cleanup(chromosome_basenames, converted_oe_files=[], reference_ID='REF',
+            query_ID='QRY', work_dir='./'):
 
     def remove(path):
         try:
@@ -418,10 +419,12 @@ def cleanup(basenames, reference_ID='REF', query_ID='QRY', work_dir='./'):
         except OSError:
             pass
 
+    for file in converted_oe_files:
+        remove(file)
     for sampleID in reference_ID, query_ID:
         remove(os.path.join(work_dir, 'chrom_sizes_' + sampleID))
         remove(os.path.join(work_dir, 'ix_converters_' + sampleID))
-        for basename in basenames:
+        for basename in chromosome_basenames:
             for ext in ['.sparse', '.regions.bed']:
                 remove(os.path.join(
                     work_dir, sampleID + '_' + basename + ext))
