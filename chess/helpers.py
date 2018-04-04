@@ -1,3 +1,5 @@
+import io
+import gzip
 import numpy as np
 from future.utils import string_types
 
@@ -143,11 +145,23 @@ class GenomicRegion(object):
             chromosome=self.chromosome, start=self.start, end=self.end)
 
 
+def is_gzipped(file_name):
+    if file_name.endswith('.gz') or file_name.endswith('.gzip'):
+        return True
+    return False
+
+
+def _open(file_name, mode='r'):
+    if is_gzipped(file_name):
+        return io.TextIOWrapper(gzip.open(file_name, mode=mode))
+    return open(file_name, mode=mode)
+
+
 def load_regions(file_name, sep=None):
     regions = []
     ix2reg = {}
     ix_converter = None
-    with open(file_name, 'r') as f:
+    with _open(file_name, 'r') as f:
         for i, line in enumerate(f):
             line = line.rstrip()
             fields = line.split(sep)
@@ -222,7 +236,7 @@ def sub_matrix_regions(hic_matrix, regions, region):
 
 
 def edges_from_sparse_matrix(file_name, ix_converter=None, sep="\t"):
-    with open(file_name, 'r') as f:
+    with _open(file_name, 'r') as f:
         for line in f:
             if line.startswith("#"):
                 continue
@@ -272,7 +286,7 @@ def load_pairs(file_name, sep=None):
         score (not used), strand_ref, strand_qry
     """
     pairs = {}
-    with open(file_name, 'r') as f:
+    with _open(file_name, 'r') as f:
         for line in f:
             if line.startswith('#'):
                 continue
@@ -308,7 +322,7 @@ def split_by_chrom(matrix_file, regions, ix2reg, full_matrix_ix_converter=None,
     chrom_handles = {}
     ix_converters = {}
     chrom_ixs = {}
-    with open(matrix_file, 'r') as f:
+    with _open(matrix_file, 'r') as f:
         for line in f:
             if line.startswith("#"):
                 continue
@@ -358,7 +372,7 @@ def split_by_chrom(matrix_file, regions, ix2reg, full_matrix_ix_converter=None,
                 range(size))}
         chrom_sizes[chrom] = size
 
-        with open('{}_{}.regions.bed'.format(sampleID, chrom), 'w') as f:
+        with _open('{}_{}.regions.bed'.format(sampleID, chrom), 'w') as f:
             for ix, cix in ix_converters[chrom].items():
                 line = '\t'.join(
                     [str(e) for e in ix2reg[int(ix)]] + [str(cix)])
