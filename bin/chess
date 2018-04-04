@@ -240,13 +240,13 @@ class Chess(object):
         logger.debug(args)
 
         logger.info('[MAIN]: Preparing Hi-C data')
-        logger.info('[MAIN]: Converting to observed / expected')
 
         input_paths = [
             (args.reference_ID, args.reference_sparse, args.reference_regions),
             (args.query_ID, args.query_sparse, args.query_regions)]
 
         if not args.converted_input and not args.fast_input:
+            logger.info('[MAIN]: Converting to observed / expected')
             from chess.oe import observed_expected
 
             for pos, (ID, sparse, regions) in enumerate(input_paths):
