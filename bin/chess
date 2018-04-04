@@ -1,0 +1,424 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import textwrap
+
+import logging
+logger = logging.getLogger('')
+
+
+class Chess(object):
+
+    def __init__(self):
+        parser = chess_parser()
+
+        flag_increments = {
+            '-l': 2, '--log-file': 2,
+        }
+
+        option_ix = 1
+        while option_ix < len(sys.argv) and sys.argv[option_ix].startswith('-'):
+            if sys.argv[option_ix] in flag_increments:
+                option_ix += flag_increments[sys.argv[option_ix]]
+            else:
+                option_ix += 1
+
+        # parse_args defaults to [1:] for args, but you need to
+        # exclude the rest of the args too, or validation will fail
+        args = parser.parse_args(sys.argv[1:option_ix+1])
+
+        # configure logger
+        if args.verbosity == 1:
+            log_level = logging.WARN
+        elif args.verbosity == 2:
+            log_level = logging.INFO
+        elif args.verbosity > 2:
+            log_level = logging.DEBUG
+        else:
+            log_level = logging.INFO
+        logger.setLevel(log_level)
+
+        if args.log_file is None:
+            sh = logging.StreamHandler()
+            sh_formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+            sh.setFormatter(sh_formatter)
+            sh.setLevel(log_level)
+            logger.addHandler(sh)
+        else:
+            log_file = os.path.expanduser(args.log_file)
+            fh = logging.FileHandler(log_file, mode='a')
+            formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+            fh.setFormatter(formatter)
+            fh.setLevel(log_level)
+            logger.addHandler(fh)
+
+        # get version info
+        if args.print_version:
+            import chess
+            print(chess.__version__)
+            exit()
+
+        if args.command is None or not hasattr(self, args.command):
+            print('Unrecognized command')
+            parser.print_help()
+            exit(1)
+
+        # echo parameters back to user
+        command = " ".join(sys.argv)
+        logger.info("Running '{}'".format(command))
+
+        # use dispatch pattern to invoke method with same name
+        getattr(self, args.command)([sys.argv[0]] + sys.argv[option_ix:])
+
+        # echo parameters back to user
+        logger.info("Finished '{}'".format(" ".join(sys.argv)))
+
+    def sim(self, argv):
+        parser = MyParser(
+            description='''
+            Compare structures between pairs of Hi-C matrices using the
+            structural similarity index. Compute p-value and z-value after
+            obtaining a background distribution of similarity values of the
+            reference in the pair to the rest of the queries source genome.''',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+        parser.add_argument(
+            'reference_sparse',
+            type=str,
+            help='''Balanced or observed / expected Hi-C matrix in sparse format
+            for reference sample.
+            (each line:
+                <row region index> <column region index> <matrix value>)''')
+
+        parser.add_argument(
+            'reference_regions',
+            type=str,
+            help='''BED file (no header) with regions corresponding to
+            the number of rows in the provided reference matrix.''')
+
+        parser.add_argument(
+            'query_sparse',
+            type=str,
+            help='''Balanced or observed / expected Hi-C matrix in sparse format
+            for query sample.
+            (each line:
+                <row region index> <column region index> <matrix value>)''')
+
+        parser.add_argument(
+            'query_regions',
+            type=str,
+            help='''BED file (no header) with regions corresponding to
+            the number of rows in the provided query matrix.''')
+
+        parser.add_argument(
+            'pairs',
+            type=str,
+            help='''Region pairs to compare.
+            Must be in bedpe format with chrom1, start1, ...
+            corresponding to reference and chrom2, start2, ... to query.''')
+
+        parser.add_argument(
+            'out',
+            type=str,
+            help='''Path to outfile.''')
+
+        parser.add_argument(
+            '--reference-ID',
+            type=str,
+            default='REF',
+            help='''Species / Sample identifier for the reference. ''')
+
+        parser.add_argument(
+            '--query-ID',
+            type=str,
+            default='QRY',
+            help='''Species / Sample identifier for the query.''')
+
+        parser.add_argument(
+            '-p',
+            type=int,
+            default=1,
+            help='''Number of cores to use.''')
+
+        parser.add_argument(
+            '--keep-unmappable_bins',
+            action='store_true',
+            default=False,
+            help='''Disable deletion of unmappable bins.''')
+
+        parser.add_argument(
+            '--no-raw',
+            action='store_true',
+            default=False,
+            help='''Do not store full raw results file.''')
+
+        parser.add_argument(
+            '--mappability-cutoff',
+            type=float,
+            default=0.1,
+            help='''Low pass threshold for fraction of unmappable bins.
+                    Matrices with a higher content of unmappable bins
+                    will not be considered.
+                    Unmappable bins will be deleted from matrices
+                    passing the filter.''')
+
+        parser.add_argument(
+            '-r', '--relative-windowsize',
+            type=float,
+            default=1,
+            help='''Relative window size value
+            for the win_size param in the ssim function.
+            Fraction of the matrix size.''')
+
+        parser.add_argument(
+            '-a', '--absolute-windowsize',
+            type=int,
+            default=None,
+            help='''Absolute window size value in bins
+            for the win_size param in the ssim function.
+            Overwrites -r.''')
+
+        parser.add_argument(
+            '--limit-background',
+            action='store_true',
+            default=False,
+            help='''Restrict background computation to the syntenic / paired
+            chromosome as indicated in the pairs file.''')
+
+        parser.add_argument(
+            '--genome-scan',
+            action='store_true',
+            default=False,
+            help='''Omit all background calculations,
+            report only the ssim for pairwise comparisons.''')
+
+        parser.add_argument(
+            '--fast-input',
+            action='store_true',
+            default=False,
+            help='''Skip splitting of input matrix by chromosomes.
+            Will search working directory (-d)
+            for one .sparse and one .bed (regions)
+            file per chromosome and sample + ix_converter and chrom sizes jsons
+            (e.g. from another run on the same Hi-C data with --no-clean).''')
+
+        parser.add_argument(
+            '--no-clean',
+            action='store_true',
+            default=False,
+            help='''Keep split chromosome files, ix_converters and chrom_size jsons.
+            Use if you intend to rerun CHESS on the same Hi-C data.''')
+
+        parser.add_argument(
+            '-d', '--set-wd',
+            type=str,
+            default='./',
+            help='''Path to working directory. Intermediate files will be saved
+            here. Will be cleaned after run, unless --no-clean is set.''')
+
+        args = parser.parse_args(argv[2:])
+
+        import json
+        import pathos
+        import pandas as pd
+        from chess.helpers import load_pairs, load_regions, split_by_chrom
+        from chess.sim import distribute_workload, compare_structures_genome_scan, \
+            compare_structures_sliding_window, post_process, post_process_simple, cleanup
+
+        logger.debug('[MAIN]: Parameters:')
+        logger.debug(args)
+
+        logger.info('[MAIN]: Preparing Hi-C data')
+        sampleID2hic = {}
+        o = (
+            (args.reference_ID, args.reference_sparse, args.reference_regions),
+            (args.query_ID, args.query_sparse, args.query_regions))
+
+        for sampleID, sparse_file, regions_file in o:
+            regions, ix_converter, ix2reg = load_regions(regions_file)
+            if args.fast_input:
+                logger.info(
+                    ("[MAIN]: Loading chromosome"
+                     " info from working dir for {}").format(
+                        sampleID))
+                with open(os.path.join(args.set_wd, 'chrom_sizes_{}'.format(
+                        sampleID)), 'r') as f:
+                    chrom_sizes = json.load(f)
+                with open(os.path.join(args.set_wd, 'ix_converters_{}'.format(
+                        sampleID)), 'r') as f:
+                    ix_converters = json.load(f)
+            else:
+                logger.info(
+                    "[MAIN]: Splitting {} Hi-C matrix by chromosomes".format(
+                        sampleID))
+                chrom_sizes, ix_converters = split_by_chrom(
+                    sparse_file, regions, ix2reg, ix_converter, sampleID=sampleID)
+                for strf, o in zip(
+                        ['chrom_sizes_{}'.format(sampleID),
+                         'ix_converters_{}'.format(sampleID)],
+                        [chrom_sizes, ix_converters]):
+                    with open(os.path.join(args.set_wd, strf), 'w') as f:
+                        json.dump(o, f)
+            sampleID2hic[sampleID] = {
+                'sizes': chrom_sizes,
+                'ix': ix_converters}
+
+        logger.info('[MAIN]: Loading pairs')
+        pairs = load_pairs(args.pairs)
+
+        if args.p > len(pairs):
+            args.p = len(pairs)
+            logger.info(('[MAIN]: Number of requested cores exceeds '
+                         'number of specified pairs. '
+                         'Will only use {} cores.').format(args.p))
+
+        if args.p > 1:
+            pair_subsets = distribute_workload(pairs, limit_background=args.limit_background, p=args.p)
+        else:
+            pair_subsets = {0: pairs}
+
+        pool = pathos.multiprocessing.ProcessPool(ncpus=args.p)
+
+        def call_comparison(worker_ID):
+            inp = (args.reference_ID, args.query_ID, sampleID2hic,
+                   worker_ID, pair_subsets[worker_ID], 20, args.set_wd,
+                   args.keep_unmappable_bins, args.absolute_windowsize,
+                   args.relative_windowsize, args.mappability_cutoff,
+                   args.limit_background)
+            if args.genome_scan:
+                return compare_structures_genome_scan(*inp)
+            else:
+                return compare_structures_sliding_window(*inp)
+
+        logger.info('[MAIN]: Initializing workers')
+        if args.genome_scan:
+            results = list(
+                results for results
+                in pool.uimap(call_comparison, pair_subsets.keys()))
+            pool.close()
+            pool.join()
+            logger.info("[MAIN]: Merging results")
+            full_raw = {
+                k: v for rr in results for k, v in rr.items()}
+            outfile = args.out
+            logger.info("[MAIN]: Post processing results and saving output")
+            processed_results_frame = pd.DataFrame(
+                post_process_simple(full_raw))
+            processed_results_frame.to_csv(outfile, index=False, sep='\t')
+        else:
+            results = list(
+                (results, rounded_queries)
+                for results, rounded_queries
+                in pool.uimap(call_comparison, pair_subsets.keys()))
+            pool.close()
+            pool.join()
+            logger.info("[MAIN]: Merging results")
+            full_raw = {
+                k: v for rr, rq in results for k, v in rr.items()}
+            full_rounded_queries = {
+                k: v for rr, rq in results for k, v in rq.items()}
+            outfile = args.out
+            if not args.no_raw:
+                with open(outfile + '.FULL_RAW.json', 'w') as f:
+                    json.dump(full_raw, f)
+                with open(outfile + '.FULL_ROUNDED_QUERIES.json', 'w') as f:
+                    json.dump(full_rounded_queries, f)
+            logger.info("[MAIN]: Post processing results and saving output")
+            processed_results_frame = pd.DataFrame(
+                post_process(full_raw, full_rounded_queries))
+            processed_results_frame.to_csv(outfile, index=False, sep='\t')
+
+        if not args.no_clean:
+            logger.info("[MAIN]: Cleaning working directory")
+            for d in sampleID2hic.values():
+                cleanup(d['sizes'].keys(), reference_ID=args.reference_ID,
+                        query_ID=args.query_ID, work_dir=args.set_wd)
+
+    def oe(self, argv):
+        parser = MyParser(
+            description='''
+                    Convert a sparse Hi-C matrix to observed/expected format.''',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+        parser.add_argument(
+            'input_matrix',
+            type=str,
+            help='''Balanced Hi-C matrix in sparse format.
+                    (each line: <row region index> <column region index> <matrix value>)''')
+
+        parser.add_argument(
+            'regions',
+            type=str,
+            help='''BED file (no header) with regions corresponding to
+                    the number of rows in the provided reference matrix.''')
+
+        parser.add_argument(
+            'output_matrix',
+            type=str,
+            help='''Balanced or observed / expected Hi-C matrix in sparse format
+                    for query sample.
+                    (each line:
+                        <row region index> <column region index> <matrix value>)''')
+
+        args = parser.parse_args(argv[2:])
+
+        from chess.oe import observed_expected
+
+        output_regions, output_edges = observed_expected(args.regions, args.input_matrix)
+        with open(args.output_matrix, 'w') as o:
+            for source, sink, weight in output_edges:
+                o.write("{}\t{}\t{:.6e}\n".format(source, sink, weight))
+
+
+def chess_parser():
+    usage = '''\
+        chess <command> [options]
+
+        Commands:
+            sim          Calculate structural similarity
+            oe           Transform a Hi-C matrix to an observed/expected matrix 
+
+        Run chess <command> -h for help on a specific command.
+        '''
+    parser = argparse.ArgumentParser(
+        description="CHESS: Compare Hi-C Experiments using Structural Similarity",
+        usage=textwrap.dedent(usage)
+    )
+
+    parser.add_argument(
+        '--version', dest='print_version',
+        action='store_true',
+        help='''Print version information'''
+    )
+    parser.set_defaults(print_version=False)
+
+    parser.add_argument(
+        '--verbose', '-v', dest='verbosity',
+        action='count',
+        default=0,
+        help='''Set verbosity level: Can be chained like '-vvv' to increase verbosity. Default is to show
+                errors, warnings, and info messages (same as '-vv'). '-v' shows only errors and warnings,
+                '-vvv' shows errors, warnings, info, and debug messages in addition.'''
+    )
+
+    parser.add_argument(
+        '-l', '--log-file', dest='log_file',
+        help='''Path to file in which to save log.'''
+    )
+
+    parser.add_argument('command', nargs='?', help='Subcommand to run')
+
+    return parser
+
+
+class MyParser(argparse.ArgumentParser):
+    def error(self, message):
+        sys.stderr.write('error: %s\n' % message)
+        self.print_help()
+        sys.exit(2)
+
+
+if __name__ == '__main__':
+    Chess()
