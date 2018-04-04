@@ -324,7 +324,7 @@ def split_by_chrom(matrix_file, regions, ix2reg, full_matrix_ix_converter=None,
                 continue
             if c1 not in chrom_handles:
                 chrom_handles[c1] = open(os.path.join(
-                    work_dir + '{}_{}.sparse'.format(sampleID, c1), 'w'))
+                    work_dir, '{}_{}.sparse'.format(sampleID, c1)), 'w')
                 chrom_ixs[c1] = set()
             chrom_handles[c1].write(line)
             chrom_ixs[c1].update([ix1, ix2])
