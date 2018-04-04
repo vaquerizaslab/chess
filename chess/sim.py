@@ -81,6 +81,7 @@ def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic, worker_
         curr_query_size = len(qry_rs)
         if curr_query_size != query_size and query_size is not None:
             logger.debug("Current region: {}".format(qryreg))
+            logger.debug("Current end: {}".format(qryreg.end))
             raise ValueError(
                 'Varying query sizes in genome scan!')
         query_size = curr_query_size
@@ -139,6 +140,7 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
                                       relative_windowsize=1., mappability_cutoff=0.1,
                                       limit_background=False):
     print('<-------', work_dir)
+
     def load_chrom(sample, chrom):
         size, ix = (sampleID2hic[sample][k][chrom]
                     for k in ['sizes', 'ix'])
@@ -496,4 +498,3 @@ def distribute_workload(pairs, limit_background, p=1):
              }
 
     return pair_subsets
-
