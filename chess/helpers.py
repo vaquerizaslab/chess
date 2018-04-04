@@ -154,7 +154,7 @@ def load_regions(file_name, sep=None):
             fields = line.split(sep)
             if len(fields) > 2:
                 chromosome = fields[0]
-                start = int(fields[1]) + 1
+                start = int(fields[1])
                 end = int(fields[2])
                 ix = i
                 ix2reg[ix] = [chromosome, int(fields[1]), int(fields[2])]
