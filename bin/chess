@@ -218,25 +218,53 @@ class Chess(object):
             help='''Path to working directory. Intermediate files will be saved
             here. Will be cleaned after run, unless --no-clean is set.''')
 
+        parser.add_argument(
+            '--converted-input',
+            action='store_true',
+            default=False,
+            help='''Use if input sparse matrices are already observed / expected
+            matrices. Will skip transformation.''')
+
         args = parser.parse_args(argv[2:])
 
         import json
         import pathos
         import pandas as pd
         from chess.helpers import load_pairs, load_regions, split_by_chrom
-        from chess.sim import distribute_workload, compare_structures_genome_scan, \
-            compare_structures_sliding_window, post_process, post_process_simple, cleanup
+        from chess.sim import distribute_workload, \
+            compare_structures_genome_scan, \
+            compare_structures_sliding_window, post_process, \
+            post_process_simple, cleanup
 
         logger.debug('[MAIN]: Parameters:')
         logger.debug(args)
 
         logger.info('[MAIN]: Preparing Hi-C data')
-        sampleID2hic = {}
-        o = (
-            (args.reference_ID, args.reference_sparse, args.reference_regions),
-            (args.query_ID, args.query_sparse, args.query_regions))
+        logger.info('[MAIN]: Converting to observed / expected')
 
-        for sampleID, sparse_file, regions_file in o:
+        input_paths = [
+            (args.reference_ID, args.reference_sparse, args.reference_regions),
+            (args.query_ID, args.query_sparse, args.query_regions)]
+
+        if not args.converted_input and not args.fast_input:
+            from chess.oe import observed_expected
+
+            for pos, (ID, sparse, regions) in enumerate(input_paths):
+                oe_sparse = os.path.join(
+                    args.set_wd, ID + '_' + os.path.basename(sparse) + '.OE')
+
+                output_regions, output_edges = observed_expected(
+                    regions, sparse)
+
+                with open(oe_sparse, 'w') as o:
+                    for source, sink, weight in output_edges:
+                        o.write("{}\t{}\t{:.6e}\n".format(
+                            source, sink, weight))
+
+                input_paths[pos] = (ID, oe_sparse, regions)
+
+        sampleID2hic = {}
+        for sampleID, sparse_file, regions_file in input_paths:
             regions, ix_converter, ix2reg = load_regions(regions_file)
             if args.fast_input:
                 logger.info(
@@ -254,7 +282,8 @@ class Chess(object):
                     "[MAIN]: Splitting {} Hi-C matrix by chromosomes".format(
                         sampleID))
                 chrom_sizes, ix_converters = split_by_chrom(
-                    sparse_file, regions, ix2reg, ix_converter, sampleID=sampleID)
+                    sparse_file, regions, ix2reg,
+                    ix_converter, sampleID=sampleID, work_dir=args.set_wd)
                 for strf, o in zip(
                         ['chrom_sizes_{}'.format(sampleID),
                          'ix_converters_{}'.format(sampleID)],
@@ -275,7 +304,8 @@ class Chess(object):
                          'Will only use {} cores.').format(args.p))
 
         if args.p > 1:
-            pair_subsets = distribute_workload(pairs, limit_background=args.limit_background, p=args.p)
+            pair_subsets = distribute_workload(
+                pairs, limit_background=args.limit_background, p=args.p)
         else:
             pair_subsets = {0: pairs}
 
@@ -332,11 +362,19 @@ class Chess(object):
 
         if not args.no_clean:
             logger.info("[MAIN]: Cleaning working directory")
-            for d in sampleID2hic.values():
-                cleanup(d['sizes'].keys(), reference_ID=args.reference_ID,
-                        query_ID=args.query_ID, work_dir=args.set_wd)
+            dump = [k for d in sampleID2hic.values()
+                    for k in d['sizes'].keys()]
+
+            converted_oe_files = []
+            if not args.converted_input and not args.fast_input:
+                converted_oe_files = [e[1] for e in input_paths]
+
+            cleanup(dump, converted_oe_files=converted_oe_files,
+                    reference_ID=args.reference_ID, query_ID=args.query_ID,
+                    work_dir=args.set_wd)
 
     def oe(self, argv):
+        print(argv)
         parser = MyParser(
             description='''
                     Convert a sparse Hi-C matrix to observed/expected format.''',
@@ -363,7 +401,8 @@ class Chess(object):
 
         from chess.oe import observed_expected
 
-        output_regions, output_edges = observed_expected(args.regions, args.input_matrix)
+        output_regions, output_edges = observed_expected(
+            args.regions, args.input_matrix)
         with open(args.output_matrix, 'w') as o:
             for source, sink, weight in output_edges:
                 o.write("{}\t{}\t{:.6e}\n".format(source, sink, weight))
