@@ -357,10 +357,7 @@ class Chess(object):
         parser.add_argument(
             'output_matrix',
             type=str,
-            help='''Balanced or observed / expected Hi-C matrix in sparse format
-                    for query sample.
-                    (each line:
-                        <row region index> <column region index> <matrix value>)''')
+            help='''Obs/exp transformed matrix (same as input matrix format)''')
 
         args = parser.parse_args(argv[2:])
 
