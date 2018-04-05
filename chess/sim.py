@@ -135,9 +135,12 @@ def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic, worker_
 
 
 def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
-                                      worker_ID, pairs, min_bins=20, work_dir='./',
-                                      keep_unmappable_bins=False, absolute_windowsize=None,
-                                      relative_windowsize=1., mappability_cutoff=0.1,
+                                      worker_ID, pairs,
+                                      min_bins=20, work_dir='./',
+                                      keep_unmappable_bins=False,
+                                      absolute_windowsize=None,
+                                      relative_windowsize=1.,
+                                      mappability_cutoff=0.1,
                                       limit_background=False):
     print('<-------', work_dir)
 
@@ -183,8 +186,11 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
     len_ids = len(pairs)
     for curr_pos, (ID, refreg, qryreg) in enumerate(tpairs):
         curr_pos = curr_pos + 1
-        logger.info("[WORKER #{0}]: Matrix {1} / {2} ".format(
+        logger.info("[WORKER #{}]: Matrix {} / {} ".format(
             worker_ID, curr_pos, len_ids))
+        logger.debug("[WORKER #{}]: QRYREG: {}".format(worker_ID, qryreg))
+        logger.debug("[WORKER #{}]: REFREG: {}".format(worker_ID, refreg))
+
         if refchrm != refreg.chromosome:
             refchrm_m, refchrm_r = load_chrom(reference_ID, refreg.chromosome)
             refchrm = refreg.chromosome
