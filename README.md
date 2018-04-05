@@ -37,8 +37,8 @@ After installation, you can use the example data to familiarize yourself with th
 
 ### Finding changing regions between biological conditions in the same species
 
-This will run a comparison of 250 kb submatrices of chromosome X in wildtype _Drosophila melanogaster_ Hi-C data at 10 kb resolution to a _zld_ knockdown.
-The output directory is set to examples/Dmel_genome_scan and should, after the successful run, contain a comparison_results.tsv file with the raw similarity scores that can be used to rank the regions according to their similarity.
+This will run a comparison of 250 kb submatrices of chromosome X in wildtype _Drosophila melanogaster_ to a _zld_ knockdown.
+The output directory is set to `examples/Dmel_genome_scan` and should, after the successful run, contain a comparison_results.tsv file with the raw similarity scores that can be used to rank the regions according to their similarity.
 (Hi-C data from Hug et al. 2017)
 ```bash
 chess sim \
@@ -54,8 +54,8 @@ examples/Dmel_genome_scan/comparison_results.tsv \
 
 ### Comparing regions accross species
 
-This will run a comparison of 4 regions of varying sizes located on chromosome 10 in mouse and on chromosome 19 in human.
-The output directory is set to examples/Mmus_Hsap_syntenic and should, after the successful run, contain a comparison_results.tsv file with the raw similarity scores along with p-values and z-scores which can be used to rank the regions according to their similarity.
+This will run a comparison of 4 regions of varying sizes located on chromosome 19 in mouse and on chromosome 10 in human.
+The output directory is set to `examples/Mmus_Hsap_syntenic` and should, after the successful run, contain a comparison_results.tsv file with the raw similarity scores along with p-values and z-scores which can be used to rank the regions according to their similarity.
 (Hi-C data from Rao et al. 2014)
 ```bash
 chess sim \
@@ -72,7 +72,7 @@ examples/Mmus_Hsap_syntenic/comparison_results.tsv \
 
 There two basic modes if running CHESS: 
   - for inter-species comparisons (default)
-  - for intra-species comparisons using the -genome_scan flag.
+  - for intra-species comparisons using the `--genome-scan` flag.
 
 CHESS takes the same mandatory, positional arguments for both modes:
 
