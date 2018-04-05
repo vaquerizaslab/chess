@@ -410,13 +410,20 @@ class Chess(object):
 
         args = parser.parse_args(argv[2:])
 
+        import gzip
         from chess.oe import observed_expected
+        from chess.helpers import is_gzipped
 
-        output_regions, output_edges = observed_expected(
-            args.regions, args.input_matrix)
-        with open(args.output_matrix, 'w') as o:
-            for source, sink, weight in output_edges:
-                o.write("{}\t{}\t{:.6e}\n".format(source, sink, weight))
+        output_regions, output_edges = observed_expected(args.regions, args.input_matrix)
+        if is_gzipped(args.output_matrix):
+            with gzip.open(args.output_matrix, 'w') as o:
+                for source, sink, weight in output_edges:
+                    line = "{}\t{}\t{:.6e}\n".format(source, sink, weight)
+                    o.write(line.encode('utf-8'))
+        else:
+            with open(args.output_matrix, 'w') as o:
+                for source, sink, weight in output_edges:
+                    o.write("{}\t{}\t{:.6e}\n".format(source, sink, weight))
 
 
 def chess_parser():
