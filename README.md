@@ -34,6 +34,34 @@ python setup.py install
 
 After installation, you can use the example data to familiarize yourself with the applications of CHESS implemented in the current version.
 
+This will run a comparison of 250 kb submatrices of chromosome X in wildtype _Drosophila melanogaster_ Hi-C data at 10 kb resolution to a _zld_ knockdown.
+The output directory is set to examples/Dmel_genome_scan and should, after the successful run, contain a comparison_results.tsv file with the raw similarity scores that can be used to rank the regions according to their similarity.
+(Hi-C data from Hug et al. 2017)
+```bash
+chess sim \
+examples/Dmel_genome_scan/zld_X.sparse.gz \
+examples/Dmel_genome_scan/zld_X.regions.gz \
+examples/Dmel_genome_scan/wt_X.sparse.gz \
+examples/Dmel_genome_scan/wt_X.regions.gz \
+examples/Dmel_genome_scan/Dmel_zld_kd_wt_nc14_chrm_X_250kwindow_25kbstep.pairs.gz \
+examples/Dmel_genome_scan/comparison_results.tsv \
+--set-wd examples/Dmel_genome_scan --genome-scan
+```
+
+This will run a comparison of 4 regions of varying sizes located on chromosome 10 in mouse and on chromosome 19 in human.
+The output directory is set to examples/Mmus_Hsap_syntenic and should, after the successful run, contain a comparison_results.tsv file with the raw similarity scores along with p-values and z-scores which can be used to rank the regions according to their similarity.
+(Hi-C data from Rao et al. 2014)
+```bash
+chess sim \
+examples/Mmus_Hsap_syntenic/rao2014_hg19_chr10_25kb.sparse.gz \
+examples/Mmus_Hsap_syntenic/rao2014_hg19_chr10_25kb.regions.gz \
+examples/Mmus_Hsap_syntenic/rao2014_mm10_chr19_25kb.sparse.gz \
+examples/Mmus_Hsap_syntenic/rao2014_mm10_chr19_25kb.regions.gz \
+examples/Mmus_Hsap_syntenic/hg19_mm10_syntenic_examples.pairs.gz \
+examples/Mmus_Hsap_syntenic/comparison_results.tsv \
+--set-wd examples/Mmus_Hsap_syntenic
+```
+
 ## Usage
 
 There two basic modes if running CHESS: 
