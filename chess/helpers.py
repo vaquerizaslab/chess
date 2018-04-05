@@ -1,6 +1,7 @@
 import io
 import gzip
 import numpy as np
+import os
 from future.utils import string_types
 
 
@@ -167,7 +168,7 @@ def load_regions(file_name, sep=None):
             fields = line.split(sep)
             if len(fields) > 2:
                 chromosome = fields[0]
-                start = int(fields[1]) + 1
+                start = int(fields[1])
                 end = int(fields[2])
                 ix = i
                 ix2reg[ix] = [chromosome, int(fields[1]), int(fields[2])]
@@ -312,7 +313,7 @@ def load_pairs(file_name, sep=None):
 
 
 def split_by_chrom(matrix_file, regions, ix2reg, full_matrix_ix_converter=None,
-                   sep=None, sampleID=str()):
+                   sep=None, sampleID=str(), work_dir='./'):
     """
     Split sparse matrix into single chromosome matrix files
     + the corresponding region bed files.
@@ -336,8 +337,8 @@ def split_by_chrom(matrix_file, regions, ix2reg, full_matrix_ix_converter=None,
             if c1 != c2:
                 continue
             if c1 not in chrom_handles:
-                chrom_handles[c1] = open('{}_{}.sparse'.format(
-                    sampleID, c1), 'w')
+                chrom_handles[c1] = open(os.path.join(
+                    work_dir, '{}_{}.sparse'.format(sampleID, c1)), 'w')
                 chrom_ixs[c1] = set()
             chrom_handles[c1].write(line)
             chrom_ixs[c1].update([ix1, ix2])
@@ -372,7 +373,10 @@ def split_by_chrom(matrix_file, regions, ix2reg, full_matrix_ix_converter=None,
                 range(size))}
         chrom_sizes[chrom] = size
 
-        with _open('{}_{}.regions.bed'.format(sampleID, chrom), 'w') as f:
+        with open(
+            os.path.join(
+                work_dir, '{}_{}.regions.bed'.format(
+                    sampleID, chrom)), 'w') as f:
             for ix, cix in ix_converters[chrom].items():
                 line = '\t'.join(
                     [str(e) for e in ix2reg[int(ix)]] + [str(cix)])
