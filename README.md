@@ -7,7 +7,7 @@ CHESS is a tool for the assessment of similarity between Hi-C matrices using str
 - [CHESS](#chess)
     - [Requirements]
     - [Installation](#installation)
-    - [Quick start]
+    - [Quick start](#Quick start)
     - [Usage](#usage)
 
 <!-- /TOC -->
@@ -50,6 +50,7 @@ examples/Dmel_genome_scan/Dmel_zld_kd_wt_nc14_chrm_X_250kwindow_25kbstep.pairs.g
 examples/Dmel_genome_scan/comparison_results.tsv \
 --set-wd examples/Dmel_genome_scan --genome-scan
 ```
+> NOTE: Running this example might take some time. To speed it up, you can use the `-p <int>` flag to specify the number of cores to use (default: 1) and split the workload.
 
 
 ### Comparing regions accross species
