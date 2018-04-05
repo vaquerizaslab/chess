@@ -405,14 +405,11 @@ def post_process_simple(raw_results):
     IDs, scores = zip(
         *[(k, v)
           for k, v in raw_results.items()])
-    zscores = zscore(scores)
     for p, ID in enumerate(IDs):
         ssim = scores[p]
-        zssim = zscores[p]
         rows.append({
             'ID': ID,
-            'ssim': ssim,
-            'zssim': zssim
+            'ssim': ssim
             })
 
     return rows
