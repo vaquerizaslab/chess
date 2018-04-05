@@ -167,4 +167,27 @@ Optional arguments give you more control:
 
 * `-p <int>` lets you choose the number of cores that CHESS will use (default: 1).
 
-* `--keep-unmappable-bins`
+* `--keep-unmappable-bins` disables the deletion of deletion of unmappable bins from matrices before comparison. By default, bins that are marked as unmappable (have not contacts) in either of two matrices in a comparison are deleted from both matrices. Disabling this might give high similarity scores for matrices that happen to have unmappable bins at the same positions.
+
+* `--mappability-cutoff <float>` maximum allowed content of unmappable bins in a matrix. In case a matrix has more unmappable bins, it will not be compared. (default: 0.1)
+
+* `-r <float>, --relative-windowsize <float>` Fraction of the matrix size that will be used for the window size parameter of the structural similarity function. (default: 1)
+
+* `-a <float>, --absolute-windowsize <float>` Absolute value for the window size parameter of the structural similarity function. Overwrites `-r`.
+
+### oe
+
+`chess oe` lets you convert your input matrix to observed / expected format. Calling `chess sim` this is done autmatically, but if you want to convert your matrix for other reasons, you can use this.
+
+`oe` takes three positional arguments (in that order):
+
+* A Hi-C matrix file in sparse matrix format. This should be tab delimited, where each line has three columns:
+      \<row index\> \<column index\> \<value\>)
+
+* A BED file with region information for the Hi-C matrix.
+  This should be a tab-delimited file where each row contains chromosome name, start, and end coordinates (exclusive) of the region. This file must 
+  not contain any headers. If a fourth column is present, it is assumed to be a unique identifier
+  (index/name), which is then used to refer to that region in sparse matrix format
+  (see above).
+
+* A path to the output matrix file. Will in the same format as the input matrix.
