@@ -143,12 +143,14 @@ When called with only these arguments, CHESS will compare the specified regions 
   This dictionary contains the rounded positions of the input queries that were used in the actual comparisons. The specified start, end positions usually have to be rounded to the nearest bin.
   These positions can be used to discriminate the 'true' query region from the rest in the FULL_RAW.json file.
 
-  You can read the .json output in python using the json package:
+You can read the .json output in python using the json package:
+
 ```python
-  import json
-  with open('path_to_json_file', 'r') as f:
-    my_dict = json.load(f)
+import json
+with open('path_to_json_file', 'r') as f:
+  my_dict = json.load(f)
 ```
+
 
 When the -genome_scan flag is set, OUT will be the only output file, as no background calculation is done in that case.
 
