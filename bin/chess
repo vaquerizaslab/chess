@@ -297,6 +297,17 @@ class Chess(object):
         logger.info('[MAIN]: Loading pairs')
         pairs = load_pairs(args.pairs)
 
+        for ID, regs in pairs.items():
+            for reg, sampleID in zip(regs, [args.reference_ID, args.query_ID]):
+                sample_chromosomes = sampleID2hic[sampleID]['sizes'].keys()
+                if reg.chromosome not in sample_chromosomes:
+                    logger.debug('IDs of chromosomes loaded for {}: {}'.format(
+                        sampleID, list(sample_chromosomes)))
+                    raise ValueError(
+                        ('Chromosome {} specified in pairs for {} '
+                         'not found in input Hi-C!').format(
+                            reg.chromosome, sampleID))
+
         if args.p > len(pairs):
             args.p = len(pairs)
             logger.info(('[MAIN]: Number of requested cores exceeds '
