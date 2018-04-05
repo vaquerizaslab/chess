@@ -72,20 +72,28 @@ examples/Mmus_Hsap_syntenic/comparison_results.tsv \
 
 ## Usage
 
-CHESS has two bas
+CHESS has two basic commands: `sim`, which wraps the matrix comparison features and `oe`, which you can use to transform normalized Hi-C matrices into observed / expected matrices.
 
-There two basic modes if running CHESS: 
-  - for inter-species comparisons (default)
-  - for intra-species comparisons using the `--genome-scan` flag.
+### sim
+
+The main purpose of CHESS is the assessment of similarity between two Hi-C matrices, one of which is called the 'reference' and the other the 'query'. For this purpose, it has two basic modes:
+  - inter-species comparisons (default)
+  - intra-species comparisons using the `--genome-scan` flag.
+
+The default mode will use the the queries whole genome Hi-C to check how the similarity between the reference and query compares to the similarity between the reference and any other region of the same size as the query. Using that information, the comparison between the reference and the query will be assigned a z-score and a p-value which can be used to rank multiple reference - query pairs according to their similarity.
+
+The intra-species mode will only allow comparisons between matrices of equal size and is intended for finding changes in Hi-C data between biological conditions. The ouput will only contain a similarity score. The regions with the lowest scores are the least similar between both conditions, as assessed by CHESS.
 
 CHESS takes the same mandatory, positional arguments for both modes:
 
-* A Hi-C matrix file in sparse matrix format for the reference sample. This should be tab delimited, where each line has three columns:
+* A normalized Hi-C matrix file in sparse matrix format for the reference sample. This should be tab delimited, where each line has three columns:
       \<row index\> \<column index\> \<value\>)
 
 > NOTE: Using CHESS with large matrices at high resolution can require a lot of memory,
          especially when using many threads. Typically, every thread will load one full
-         chromosome Hi-C map into memory (the number of threads can be controlled with the -p flag).
+         chromosome Hi-C map into memory (the number of threads can be controlled with the `-p` flag).
+
+> NOTE: By default, the input matrices will be converted to observed / expected matrices. In case you already have observed / expected matrices, you can use the `--converted-input` flag to skip the observed / expected conversion.
 
 * A BED file with region information for the reference Hi-C matrix.
   This should be a tab-delimited file where each row contains chromosome name, start, and end coordinates (exclusive) of the region. This file must 
@@ -93,7 +101,7 @@ CHESS takes the same mandatory, positional arguments for both modes:
   (index/name), which is then used to refer to that region in sparse matrix format
   (see above).
 
-* A Hi-C matrix file in sparse matrix format for the query sample.
+* A normalized Hi-C matrix file in sparse matrix format for the query sample.
 
 * A BED file with region information for the query Hi-C matrix.
 
@@ -143,9 +151,9 @@ Optional arguments give you more control:
 
 * `--query_ID <string>` Species / Sample identifier for the query Hi-C data. Will be used as a prefix for the intermediate file names corresponding to the query Hi-C. Default: QRY
 
-* `-d`, `--set-wd <string>` lets you set the working directory of CHESS. All intermediate files will be written to this directory.
+* `-d`, `--set-wd <string>` lets you set the working directory of CHESS. All intermediate files will be written to this directory (default: './'.
 
-* `--no-clean` lets you keep all intermediate files (split chromosome files and helpers).
+* `--no-clean` lets you keep all intermediate files (split chromosome files, helpers and full input matrices converted to observed / expected matrices).
 
 * `--fast-input` lets you use intermediate files generated in previous runs located in the working directory. Reduces the runtime, as the input sparse matrix won't have to be split.
 
@@ -153,3 +161,10 @@ Optional arguments give you more control:
 
 * `--limit-background` reduces the computation of the background score distribution to the chromosome the query region (defined in the pairs file) is located on. Reduces runtime.
 
+* `--converted-input` will skip the observed / expected conversion of the input matrices. Use if you already have observed / expected matrices or want to compare matrices in different format.
+
+* `--no-raw` will only write only the standard OUT file. Set if you have no use for the OUT.FULL_RAW.json and OUT.FULL_ROUNDED_QUERIES.json files.
+
+* `-p <int>` lets you choose the number of cores that CHESS will use (default: 1).
+
+* `--keep-unmappable-bins`
