@@ -143,6 +143,14 @@ When called with only these arguments, CHESS will compare the specified regions 
   This dictionary contains the rounded positions of the input queries that were used in the actual comparisons. The specified start, end positions usually have to be rounded to the nearest bin.
   These positions can be used to discriminate the 'true' query region from the rest in the FULL_RAW.json file.
 
+  You can read the .json output in python using the json package:
+
+```python
+import json
+with open('path_to_json_file', 'r') as f:
+  my_dict = json.load(f)
+```
+
 When the -genome_scan flag is set, OUT will be the only output file, as no background calculation is done in that case.
 
 Optional arguments give you more control:
@@ -159,7 +167,7 @@ Optional arguments give you more control:
 
 * `--genome-scan` will run without any background comparisons and report only the raw ssim scores for the pairs defined in the pairs file. All regions in the pairs file are expected to be of similar size to ensure comparability of the scores. Use this if you want to find differences between two Hi-C datasets mapped to the same genome.
 
-* `--limit-background` reduces the computation of the background score distribution to the chromosome the query region (defined in the pairs file) is located on. Reduces runtime.
+* `--limit-background` reduces the computation of the background score distribution to the chromosome the query region (defined in the pairs file) is located on. Reduces runtime. However, it is in general advisable to use the whole genome as a background. Otherwise, some bias might be introduced due to differing chromosome sizes.
 
 * `--converted-input` will skip the observed / expected conversion of the input matrices. Use if you already have observed / expected matrices or want to compare matrices in different format.
 
