@@ -9,12 +9,6 @@ CHESS is a tool for the assessment of similarity between Hi-C matrices using str
     - [Installation](#installation)
     - [Quick start]
     - [Usage](#usage)
-        - [`plot`](#plot)
-            - [Launching from the command line](#launching-from-the-command-line)
-            - [Interactive plotting window](#interactive-plotting-window)
-        - 
-        - [`tads`](#tads)
-        - [`subset`](#subset)
 
 <!-- /TOC -->
 
@@ -39,8 +33,6 @@ python setup.py install
 ## Quick start
 
 After installation, you can use the example data to familiarize yourself with the applications of CHESS implemented in the current version.
-
-
 
 ## Usage
 
@@ -123,8 +115,3 @@ Optional arguments give you more control:
 
 * `--limit-background` reduces the computation of the background score distribution to the chromosome the query region (defined in the pairs file) is located on. Reduces runtime.
 
-
-
-#### Interactive plotting window
-
-After starting TADtool with the `plot` option as instructed above, the interactive plotting window will open.

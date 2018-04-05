@@ -81,6 +81,7 @@ def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic, worker_
         curr_query_size = len(qry_rs)
         if curr_query_size != query_size and query_size is not None:
             logger.debug("Current region: {}".format(qryreg))
+            logger.debug("Current end: {}".format(qryreg.end))
             raise ValueError(
                 'Varying query sizes in genome scan!')
         query_size = curr_query_size
@@ -134,11 +135,15 @@ def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic, worker_
 
 
 def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
-                                      worker_ID, pairs, min_bins=20, work_dir='./',
-                                      keep_unmappable_bins=False, absolute_windowsize=None,
-                                      relative_windowsize=1., mappability_cutoff=0.1,
+                                      worker_ID, pairs,
+                                      min_bins=20, work_dir='./',
+                                      keep_unmappable_bins=False,
+                                      absolute_windowsize=None,
+                                      relative_windowsize=1.,
+                                      mappability_cutoff=0.1,
                                       limit_background=False):
     print('<-------', work_dir)
+
     def load_chrom(sample, chrom):
         size, ix = (sampleID2hic[sample][k][chrom]
                     for k in ['sizes', 'ix'])
@@ -181,8 +186,11 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
     len_ids = len(pairs)
     for curr_pos, (ID, refreg, qryreg) in enumerate(tpairs):
         curr_pos = curr_pos + 1
-        logger.info("[WORKER #{0}]: Matrix {1} / {2} ".format(
+        logger.info("[WORKER #{}]: Matrix {} / {} ".format(
             worker_ID, curr_pos, len_ids))
+        logger.debug("[WORKER #{}]: QRYREG: {}".format(worker_ID, qryreg))
+        logger.debug("[WORKER #{}]: REFREG: {}".format(worker_ID, refreg))
+
         if refchrm != refreg.chromosome:
             refchrm_m, refchrm_r = load_chrom(reference_ID, refreg.chromosome)
             refchrm = refreg.chromosome
@@ -410,7 +418,8 @@ def post_process_simple(raw_results):
     return rows
 
 
-def cleanup(basenames, reference_ID='REF', query_ID='QRY', work_dir='./'):
+def cleanup(chromosome_basenames, converted_oe_files=[], reference_ID='REF',
+            query_ID='QRY', work_dir='./'):
 
     def remove(path):
         try:
@@ -418,10 +427,12 @@ def cleanup(basenames, reference_ID='REF', query_ID='QRY', work_dir='./'):
         except OSError:
             pass
 
+    for file in converted_oe_files:
+        remove(file)
     for sampleID in reference_ID, query_ID:
         remove(os.path.join(work_dir, 'chrom_sizes_' + sampleID))
         remove(os.path.join(work_dir, 'ix_converters_' + sampleID))
-        for basename in basenames:
+        for basename in chromosome_basenames:
             for ext in ['.sparse', '.regions.bed']:
                 remove(os.path.join(
                     work_dir, sampleID + '_' + basename + ext))
@@ -493,4 +504,3 @@ def distribute_workload(pairs, limit_background, p=1):
              }
 
     return pair_subsets
-
