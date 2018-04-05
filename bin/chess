@@ -143,7 +143,7 @@ class Chess(object):
             help='''Number of cores to use.''')
 
         parser.add_argument(
-            '--keep-unmappable_bins',
+            '--keep-unmappable-bins',
             action='store_true',
             default=False,
             help='''Disable deletion of unmappable bins.''')
