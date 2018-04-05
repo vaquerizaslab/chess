@@ -34,6 +34,7 @@ python setup.py install
 
 After installation, you can use the example data to familiarize yourself with the applications of CHESS implemented in the current version.
 
+Use `chess -h` for quick help and orientation.
 
 ### Finding changing regions between biological conditions in the same species
 
@@ -70,6 +71,8 @@ examples/Mmus_Hsap_syntenic/comparison_results.tsv \
 ```
 
 ## Usage
+
+CHESS has two bas
 
 There two basic modes if running CHESS: 
   - for inter-species comparisons (default)
