@@ -12,7 +12,14 @@ from .helpers import load_matrix, load_regions, sub_matrix_regions, GenomicRegio
 logger = logging.getLogger(__name__)
 
 
-def find_masked_rows(m, masking_value=1):
+def find_masked_rows(m, masking_value=0):
+    """Find rows in m filled with masking value.
+
+    :param m: Numpy matrix to be searched for masked rows.
+    :param masking_value: Value that corresponds to missing contacts,
+                          defaults to 0
+    :returns: Indices of masked rows.
+    """
     s = np.sum(m, 0)
     n_bins = m.shape[0]
     cutoff = n_bins * masking_value
@@ -22,6 +29,13 @@ def find_masked_rows(m, masking_value=1):
 
 
 def remove_rows(m, target_rows):
+    """Remove target bins from m.
+
+    Remove rows and columns with indices indicated in target rows form m.
+    :param m: Numpy matrix.
+    :param target_rows: List of indices of bins to be removed from m.
+    :returns: Truncated numpy matrix.
+    """
     idxs = target_rows
     m_removed = np.delete(m, idxs, 0)
     m_removed = np.delete(m_removed, idxs, 1)
@@ -29,11 +43,68 @@ def remove_rows(m, target_rows):
     return m_removed
 
 
-def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic, worker_ID,
-                                   pairs, min_bins=20, work_dir='./',
-                                   keep_unmappable_bins=False, absolute_windowsize=None,
-                                   relative_windowsize=1., mappability_cutoff=0.1,
+def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic,
+                                   worker_ID, pairs, min_bins=20,
+                                   work_dir='./', keep_unmappable_bins=False,
+                                   absolute_windowsize=None,
+                                   relative_windowsize=1.,
+                                   mappability_cutoff=0.1,
                                    limit_background=False):
+    """Run comparison of given Hi-C matrices without any background model.
+
+    Compare given submatrices of the full Hi-C matrices in sampleID2hic.
+    All submatrices (specified in pairs) have to be of the same size.
+    The assignment of reference and query samples is arbitrary in this case,
+    but has to be consistent.
+    :param reference_ID: ID string of reference Hi-C sample,
+                         as used in sampleID2hic.
+    :param query_ID: ID string of query Hi-C sample,
+                     as used in sampleID2hic.
+    :param sampleID2hic: Dictionary containing information about
+                         names, sizes and the index map necessary to load
+                         a Hi-C matrix from a sparse matrix + regions file
+                         to a numpy matrix. Must have form:
+                         {
+                            sampleID: {
+                                'size': {chromosome_name: chromosome_size},
+                                'ix': {chromosome_name: ix_converter dict}
+                            }
+                         }
+    :param worker_ID: String or int used as ID for the process in which this
+                      function is run.
+    :param pairs: Dictionary indicating the submatrix pairs that
+                  will be compared.
+                  Must have form:
+                  {
+                    pair_id: (reference_region, query_region)
+                  },
+                  where reference_region and query_region
+                  are :class:`~GenomicRegion` objects.
+    :param min_bins: Minimum size of matrix to be considered for comparison,
+                     defaults to 20
+    :param work_dir: Path to directory where the .sparse and .region files
+                     for the chromosome matrices are located, defaults to './'
+    :param keep_unmappable_bins: If True, disables removal of unmappable bins
+                                 from matrices prior to comparison,
+                                 defaults to False
+    :param absolute_windowsize: Absolute window size used in the
+                                structural similarity function. Overwrites
+                                relative_windowsize, defaults to None
+    :param relative_windowsize: Window size relative to the size
+                                of the compared matrices,
+                                used in the structural similarity function,
+                                defaults to 1.
+    :param mappability_cutoff: Maximum fraction of unmappable bins allowed
+                               in a matrix to be considered for comparison,
+                               defaults to 0.1
+    :param limit_background: Does not have an effect.
+                             will be removed in future versions.
+                             Defaults to False
+    :returns: results dictionary of form:
+              {
+                {pair_id: similarity_score}
+              }
+    """
 
     def load_chrom(sample, chrom):
         size, ix = (sampleID2hic[sample][k][chrom]
