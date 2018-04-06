@@ -19,7 +19,8 @@ class Chess(object):
         }
 
         option_ix = 1
-        while option_ix < len(sys.argv) and sys.argv[option_ix].startswith('-'):
+        while (option_ix < len(sys.argv) and
+               sys.argv[option_ix].startswith('-')):
             if sys.argv[option_ix] in flag_increments:
                 option_ix += flag_increments[sys.argv[option_ix]]
             else:
@@ -42,14 +43,16 @@ class Chess(object):
 
         if args.log_file is None:
             sh = logging.StreamHandler()
-            sh_formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+            sh_formatter = logging.Formatter(
+                "%(asctime)s %(levelname)s %(message)s")
             sh.setFormatter(sh_formatter)
             sh.setLevel(log_level)
             logger.addHandler(sh)
         else:
             log_file = os.path.expanduser(args.log_file)
             fh = logging.FileHandler(log_file, mode='a')
-            formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+            formatter = logging.Formatter(
+                "%(asctime)s %(levelname)s %(message)s")
             fh.setFormatter(formatter)
             fh.setLevel(log_level)
             logger.addHandler(fh)
@@ -388,14 +391,15 @@ class Chess(object):
         print(argv)
         parser = MyParser(
             description='''
-                    Convert a sparse Hi-C matrix to observed/expected format.''',
+            Convert a sparse Hi-C matrix to observed/expected format.''',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         parser.add_argument(
             'input_matrix',
             type=str,
             help='''Balanced Hi-C matrix in sparse format.
-                    (each line: <row region index> <column region index> <matrix value>)''')
+            (each line:
+            <row region index> <column region index> <matrix value>)''')
 
         parser.add_argument(
             'regions',
@@ -406,7 +410,8 @@ class Chess(object):
         parser.add_argument(
             'output_matrix',
             type=str,
-            help='''Obs/exp transformed matrix (same as input matrix format)''')
+            help='''
+            Obs/exp transformed matrix (same as input matrix format)''')
 
         args = parser.parse_args(argv[2:])
 
@@ -414,7 +419,8 @@ class Chess(object):
         from chess.oe import observed_expected
         from chess.helpers import is_gzipped
 
-        output_regions, output_edges = observed_expected(args.regions, args.input_matrix)
+        output_regions, output_edges = observed_expected(
+            args.regions, args.input_matrix)
         if is_gzipped(args.output_matrix):
             with gzip.open(args.output_matrix, 'w') as o:
                 for source, sink, weight in output_edges:
@@ -425,6 +431,118 @@ class Chess(object):
                 for source, sink, weight in output_edges:
                     o.write("{}\t{}\t{:.6e}\n".format(source, sink, weight))
 
+    def pairs(self, argv):
+        print(argv)
+        parser = MyParser(
+            description='''Make window pairs for CHESS genome scan.
+
+            Will write all positions of a sliding window of specified
+            size with specified step in the specified genome to the outfile
+            which can be directly used to run CHESS sim with the --genome-scan
+            option.
+            ''',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+        parser.add_argument(
+            'genome',
+            type=str,
+            help='''UCSC genome identifier (as recognized by pybedtools),
+            or path to tab-separated chrom sizes file with columns
+            <chromosome name> <chromosome size>.
+            Will use the path only if no USCS entry with that name is found,
+            or --file-input is specified
+            ''')
+
+        parser.add_argument(
+            'window',
+            type=int,
+            help='''Window size in base pairs''')
+
+        parser.add_argument(
+            'step',
+            type=int,
+            help='''Step size in base pairs''')
+
+        parser.add_argument(
+            'output',
+            type=str,
+            help='''Path to output file''')
+
+        parser.add_argument(
+            '--file-input',
+            action='store_true',
+            default=False,
+            help='''Will not check for USCS entry of genome input
+            with pybedtools if set''')
+
+        parser.add_argument(
+            '--chromosome',
+            type=str,
+            help='''Produce window pairs only for the specified chromosome''')
+
+        args = parser.parse_args(argv[2:])
+
+        import pybedtools as pbt
+
+        def load_chromosome_sizes(path):
+            """Load chromosome sizes from file.
+            :param path: Path to chromosome sizes file
+            :returns: The file in dictionary representation.
+            """
+            chromosome_sizes = {}
+            with open(path, 'r') as f:
+                for line in f:
+                    fields = line.strip().split()
+                    chromosome, size = fields[:2]
+                    chromosome_sizes[chromosome] = int(size)
+
+            return chromosome_sizes
+
+        if args.file_input:
+            chromosome_sizes = load_chromosome_sizes(args.genome)
+        else:
+            try:
+                chromosome_sizes = pbt.chromsizes(args.genome)
+                if chromosome_sizes == {}:
+                    raise
+                # pbt has (start, end) as values,
+                # where start is usually 0
+                chromosome_sizes = {
+                    k: v[1] for k, v in chromosome_sizes.items()}
+            except:
+                logger.info((
+                    'No entry found with pybedtools.'
+                    ' Trying to read from file.'))
+                chromosome_sizes = load_chromosome_sizes(args.genome)
+
+        chromosomes = chromosome_sizes.keys()
+        if args.chromosome:
+            try:
+                chromosome_sizes[args.chromosome]
+                chromosomes = [args.chromosome]
+            except:
+                raise ValueError((
+                    'Specified chromosome has no chromosome size entry.'))
+
+        with open(args.output, 'w') as f:
+            pair_id = 0
+            for chromosome in chromosomes:
+                pairs_dict = {'patient': {}, 'control': {}}
+                chromosome_size = chromosome_sizes[chromosome]
+                start = 0
+                while start <= (chromosome_size - args.window):
+                    end = start + args.window
+                    for sample, d in pairs_dict.items():
+                        d[pair_id] = (chromosome, start, end, '+')
+                    f.write(
+                        '\t'.join(
+                            str(e) for e in [chromosome, start, end,
+                                             chromosome, start, end,
+                                             pair_id, '.', '+', '+'])
+                        + '\n')
+                    start += args.step
+                    pair_id += 1
+
 
 def chess_parser():
     usage = '''\
@@ -432,12 +550,14 @@ def chess_parser():
 
         Commands:
             sim          Calculate structural similarity
-            oe           Transform a Hi-C matrix to an observed/expected matrix 
+            oe           Transform a Hi-C matrix to an observed/expected matrix
+            pairs        Make window pairs for CHESS genome scan
 
         Run chess <command> -h for help on a specific command.
         '''
     parser = argparse.ArgumentParser(
-        description="CHESS: Compare Hi-C Experiments using Structural Similarity",
+        description="""
+        CHESS: Compare Hi-C Experiments using Structural Similarity""",
         usage=textwrap.dedent(usage)
     )
 
@@ -452,9 +572,11 @@ def chess_parser():
         '--verbose', '-v', dest='verbosity',
         action='count',
         default=0,
-        help='''Set verbosity level: Can be chained like '-vvv' to increase verbosity. Default is to show
-                errors, warnings, and info messages (same as '-vv'). '-v' shows only errors and warnings,
-                '-vvv' shows errors, warnings, info, and debug messages in addition.'''
+        help='''Set verbosity level: Can be chained like
+        '-vvv' to increase verbosity. Default is to show
+        errors, warnings, and info messages (same as '-vv').
+        '-v' shows only errors and warnings, '-vvv' shows errors, warnings,
+        info, and debug messages in addition.'''
     )
 
     parser.add_argument(
