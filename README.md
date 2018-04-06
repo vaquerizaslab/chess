@@ -82,7 +82,7 @@ The main purpose of CHESS is the assessment of similarity between two Hi-C matri
   - inter-species comparisons (default)
   - intra-species comparisons using the `--genome-scan` flag.
 
-The default mode will use the the queries whole genome Hi-C to check how the similarity between the reference and query compares to the similarity between the reference and any other region of the same size as the query. Using that information, the comparison between the reference and the query will be assigned a z-score and a p-value which can be used to rank multiple reference - query pairs according to their similarity.
+The default mode will use the queries whole genome Hi-C to check how the similarity between the reference and query compares to the similarity between the reference and any other region of the same size as the query. Using that information, the comparison between the reference and the query will be assigned a z-score and a p-value which can be used to rank multiple reference - query pairs according to their similarity.
 
 The intra-species mode will only allow comparisons between matrices of equal size and is intended for finding changes in Hi-C data between biological conditions. The ouput will only contain a similarity score. The regions with the lowest scores are the least similar between both conditions, as assessed by CHESS.
 
@@ -110,8 +110,8 @@ CHESS takes the same mandatory, positional arguments for both modes:
 * A BEDPE file (pairs) file that specifies which regions in the reference matrix should
   be compared to which regions in the query matrix. This should be a tab-delimited file
   with columns:
-  \<ref chromosome>\> \<ref start>\> \<ref end>\> \<qry chromosome>\> \<qry start>\> \<qry end>\> \<comparison name/id>\> \<anything, not used>\> \<ref strand>\> \<qry strand>\>
-  The 8th column is required in order to match the BEDPE standart format (see http://bedtools.readthedocs.io/en/latest/content/general-usage.html).
+  \<ref chromosome\> \<ref start\> \<ref end\> \<qry chromosome\> \<qry start\> \<qry end\> \<comparison name/id\> \<anything, not used\> \<ref strand\> \<qry strand\>
+  The 8th column is required in order to match the BEDPE standard format (see http://bedtools.readthedocs.io/en/latest/content/general-usage.html).
   This file must not contain any headers. The end coordinates are exclusive.
 
 * The path to the output file.
@@ -119,7 +119,7 @@ CHESS takes the same mandatory, positional arguments for both modes:
 When called with only these arguments, CHESS will compare the specified regions between the reference and query matrices, using the query matrix as a background for the computation of p- and z-values. The output will consist of three files:
 
 * OUT, a tab-delimited file with columns: 
-  \<comparison name/ID>\> \<p-value>\> \<structural similarity score (ssim)>\> \<z-score>\>
+  \<comparison name/ID\> \<p-value\> \<structural similarity score (ssim)\> \<z-score\>
   The comparison name/ID is the same that is specified in the BEDPE input file.
   The p-values and z-scores can be used to rank the regions according to their similarity.
   The raw structural similarity score is sensitive to sizes and size differences between the compared regions and should be handled with care.
