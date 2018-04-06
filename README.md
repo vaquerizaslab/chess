@@ -11,6 +11,7 @@ CHESS is a tool for the assessment of similarity between Hi-C matrices using str
     - [Usage](#usage)
       - [sim](#sim)
       - [oe](#oe)
+      - [pairs](#pairs)
 
 <!-- /TOC -->
 
@@ -74,7 +75,8 @@ examples/Mmus_Hsap_syntenic/comparison_results.tsv \
 
 ## Usage
 
-CHESS has two basic commands: `sim`, which wraps the matrix comparison features and `oe`, which you can use to transform normalized Hi-C matrices into observed / expected matrices.
+CHESS has three basic commands: `sim`, which wraps the matrix comparison features and `oe`, which you can use to transform normalized Hi-C matrices into observed / expected matrices and `pairs` which helps you generate the pairs input file for comparing Hi-C data mapped to the same genome between biological conditions.
+
 
 ### sim
 
@@ -186,6 +188,7 @@ Optional arguments give you more control:
 
 * `-a <float>, --absolute-windowsize <float>` Absolute value for the window size parameter of the structural similarity function. Overwrites `-r`.
 
+
 ### oe
 
 `chess oe` lets you convert your input matrix to observed / expected format. Calling `chess sim` this is done autmatically, but if you want to convert your matrix for other reasons, you can use this.
@@ -202,3 +205,24 @@ Optional arguments give you more control:
   (see above).
 
 * A path to the output matrix file. Will in the same format as the input matrix.
+
+
+### pairs
+
+`chess pairs` helps you generate the pairs input file to `chess sim ... --genome-scan`. There is no need to use this function for generating the pairs file, it is just here to make your life easier. `chess pairs` will perform a window slide with the specified input parameters. All positions of the window will be written to the specified output file in the format required by `chess sim`.
+
+`pairs` takes four positional arguments (in that order):
+
+* A genome id as recognized by pybedtools (see [here](https://daler.github.io/pybedtools/autodocs/pybedtools.helpers.chromsizes.html)) or a path to a tab-delimited file indicating the chromosome names and sizes of your genome (no header, two columns: \<chromosome name\> \<chromosome size\>).
+
+* The size of the window.
+
+* The step of the window slide.
+
+* The path to the output file.
+
+You can use the following optional arguments to tweak `chess pairs`' behaviour:
+
+* `--file-input` will force `pairs` to read from file. Won't attempt to use pybedtools in that case, which is by default tried first. You can use this if you gave your chromosome.sizes file a name that is also used as a UCSC identifier.
+
+* `--chromosome` lets you restrict the pair generation to a specific chromosome, in case you don't want all of them.
