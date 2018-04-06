@@ -102,19 +102,29 @@ def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic,
                              Defaults to False
     :returns: results dictionary of form:
               {
-                {pair_id: similarity_score}
+                pair_id: similarity_score
               }
     """
 
-    def load_chrom(sample, chrom):
-        size, ix = (sampleID2hic[sample][k][chrom]
+    print('<-------', work_dir)
+
+    def load_chrom(sample, chromosome):
+        """Load the Hi-C matrix corresponding to the given sample and chromosome.
+
+        :param sample: String, sample identifier (usually QRY or REF).
+        :param chromosome: String, name of the chromosome.
+        :returns: Numpy matrix m of the chromosome Hi-C and a list r of the
+                  :class:`~GenomicRegion` objects corresponding to the regions
+                  on that chromosome.
+        """
+        size, ix = (sampleID2hic[sample][k][chromosome]
                     for k in ['sizes', 'ix'])
         m = load_matrix(
-            os.path.join(work_dir, '{}_{}.sparse'.format(sample, chrom)),
+            os.path.join(work_dir, '{}_{}.sparse'.format(sample, chromosome)),
             ix_converter=ix, size=size)
         r, c_ix_conv, c_ix2reg = load_regions(
             os.path.join(work_dir, '{}_{}.regions.bed'.format(
-                sample, chrom)))
+                sample, chromosome)))
 
         return m, r
 
@@ -126,7 +136,7 @@ def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic,
     qrychrm = None
 
     # transform pairs to tuple representation and sort to avoid
-    # uneccessary chromosome loading
+    #   uneccessary chromosome loading
     tpairs = [(k, v[0], v[1]) for k, v in pairs.items()]
     tpairs = sorted(tpairs, key=lambda p: p[1].chromosome)
     logger.info("[WORKER #{0}]: Running comparisons.".format(worker_ID))
@@ -146,9 +156,6 @@ def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic,
         reference, ref_rs = sub_matrix_regions(refchrm_m, refchrm_r, refreg)
         query, qry_rs = sub_matrix_regions(qrychrm_m, qrychrm_r, qryreg)
 
-        # binround_qry_start = qry_rs[0].start
-        # binround_qry_end = qry_rs[-1].end
-        # curr_query_size = binround_qry_end - binround_qry_start
         curr_query_size = len(qry_rs)
         if curr_query_size != query_size and query_size is not None:
             logger.debug("Current region: {}".format(qryreg))
@@ -213,17 +220,89 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
                                       relative_windowsize=1.,
                                       mappability_cutoff=0.1,
                                       limit_background=False):
+    """Run comparison of given Hi-C matrices using the query
+       genome as a background model.
+
+    Compare given submatrices of the full Hi-C matrices in sampleID2hic.
+    Submatrices can differ in size. The full genome Hi-C matrix of the
+    sample labeled as query is used as a background model.
+    :param reference_ID: ID string of reference Hi-C sample,
+                         as used in sampleID2hic.
+    :param query_ID: ID string of query Hi-C sample,
+                     as used in sampleID2hic.
+    :param sampleID2hic: Dictionary containing information about
+                         names, sizes and the index map necessary to load
+                         a Hi-C matrix from a sparse matrix + regions file
+                         to a numpy matrix. Must have form:
+                         {
+                            sampleID: {
+                                'size': {chromosome_name: chromosome_size},
+                                'ix': {chromosome_name: ix_converter dict}
+                            }
+                         }
+    :param worker_ID: String or int used as ID for the process in which this
+                      function is run.
+    :param pairs: Dictionary indicating the submatrix pairs that
+                  will be compared.
+                  Must have form:
+                  {
+                    pair_id: (reference_region, query_region)
+                  },
+                  where reference_region and query_region
+                  are :class:`~GenomicRegion` objects.
+    :param min_bins: Minimum size of matrix to be considered for comparison,
+                     defaults to 20
+    :param work_dir: Path to directory where the .sparse and .region files
+                     for the chromosome matrices are located, defaults to './'
+    :param keep_unmappable_bins: If True, disables removal of unmappable bins
+                                 from matrices prior to comparison,
+                                 defaults to False
+    :param absolute_windowsize: Absolute window size used in the
+                                structural similarity function. Overwrites
+                                relative_windowsize, defaults to None
+    :param relative_windowsize: Window size relative to the size
+                                of the compared matrices,
+                                used in the structural similarity function,
+                                defaults to 1.
+    :param mappability_cutoff: Maximum fraction of unmappable bins allowed
+                               in a matrix to be considered for comparison,
+                               defaults to 0.1
+    :param limit_background: Does not have an effect.
+                             will be removed in future versions.
+                             Defaults to False
+    :returns: - Similarity scores for comparisons of reference matrices to
+                true query and background matrices.
+                Scores are reported in a dictionary of the form:
+                {
+                    pair_id: {
+                        query_regionstring: similarity_score
+                    }
+                }
+             -  True query positions (regionstrings):
+                {
+                    pair_id: true_query_regionstring
+                }
+    """
+
     print('<-------', work_dir)
 
-    def load_chrom(sample, chrom):
-        size, ix = (sampleID2hic[sample][k][chrom]
+    def load_chrom(sample, chromosome):
+        """Load the Hi-C matrix corresponding to the given sample and chromosome.
+
+        :param sample: String, sample identifier (usually QRY or REF).
+        :param chromosome: String, name of the chromosome.
+        :returns: Numpy matrix m of the chromosome Hi-C and a list r of the
+                  :class:`~GenomicRegion` objects corresponding to the regions
+                  on that chromosome.
+        """
+        size, ix = (sampleID2hic[sample][k][chromosome]
                     for k in ['sizes', 'ix'])
         m = load_matrix(
-            os.path.join(work_dir, '{}_{}.sparse'.format(sample, chrom)),
+            os.path.join(work_dir, '{}_{}.sparse'.format(sample, chromosome)),
             ix_converter=ix, size=size)
         r, c_ix_conv, c_ix2reg = load_regions(
             os.path.join(work_dir, '{}_{}.regions.bed'.format(
-                sample, chrom)))
+                sample, chromosome)))
 
         return m, r
 
@@ -450,6 +529,34 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
 
 
 def post_process(raw_results, rounded_queries):
+    """Compute p- and z values on the raw results.
+
+    Produce a dictionary representation of the results, including a  p and
+    z-value for each pairwise comparison, that can be directly
+    transformed into a pandas dataframe.
+    :param raw_results: Dictionary holding the raw results as produced by
+                        :func:`~compare_structures_sliding_window`.
+    :param rounded_queries: Dictionary holding the regionstrings of the
+                            true query matrices for each pairwise comparison,
+                            as produced by
+                            :func:`~compare_structures_sliding_window`.
+    :returns: A list of result dictionaries of form:
+              [
+                {
+                    'ID': pair_id_1,
+                    'p': p_value_pair_1,
+                    'ssim': similarity_score_pair_1,
+                    'z-score': z_score_pair_1
+                },
+                {
+                    'ID': pair_id_2,
+                    'p': p_value_pair_2,
+                    'ssim': similarity_score_pair_2,
+                    'z-score': z_score_pair_2
+                },
+                ...
+              ]
+    """
     rows = []
     for ID, results in raw_results.items():
         truth_pos = rounded_queries[ID]
