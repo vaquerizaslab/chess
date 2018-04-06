@@ -9,6 +9,8 @@ CHESS is a tool for the assessment of similarity between Hi-C matrices using str
     - [Installation](#installation)
     - [Quick start](#quick-start)
     - [Usage](#usage)
+      - [sim](#sim)
+      - [oe](#oe)
 
 <!-- /TOC -->
 
