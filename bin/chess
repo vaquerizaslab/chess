@@ -436,7 +436,7 @@ class Chess(object):
         parser = MyParser(
             description='''Make window pairs for CHESS genome scan.
 
-            Will write all positions of a sliding window of specified
+            Write all positions of a sliding window of specified
             size with specified step in the specified genome to the outfile
             which can be directly used to run CHESS sim with the --genome-scan
             option.
