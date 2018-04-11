@@ -7,9 +7,87 @@ from math import ceil
 from scipy.stats import zscore
 from skimage.transform import resize
 from skimage.measure import compare_ssim
-from .helpers import load_matrix, load_regions, sub_matrix_regions, GenomicRegion
+from numpy.lib.stride_tricks import as_strided
+from .helpers import load_matrix, load_regions, \
+                     sub_matrix_regions, GenomicRegion
 
 logger = logging.getLogger(__name__)
+
+
+def SN(M1, M2, size=None):
+    if size is None:
+        size = 7
+    M = M1 - M2
+    uM = filter_uniform_filter(M, size=size)
+    vM = filter_uniform_filter(M, size=size, func=np.nanvar)
+    SN = np.nanmean(np.abs(uM) / vM)
+
+    return float(SN)
+
+
+def filter_uniform_filter(data, size=3, no_data_val=None,
+                          func=np.nanmean):
+    """
+    ADAPTION FROM:
+        https://www.programcreek.com/python/example/93943/scipy.ndimage.uniform_filter
+
+    CHANGES:
+
+        padding is of equal width around the original data
+        instead of just above and to the left, as in the original code.
+
+        dtype of input is required to be float64.
+
+        docstring changes.
+
+    Parameters
+    ----------
+    A = input data
+    size = odd number uniform filtering kernel size
+    no_data_val = value in matrix that is treated as no data value
+
+    Returns: nanmean of the matrix A filtered by a uniform kernel of size=size
+    -------
+    Adapted from:
+        http://stackoverflow.com/questions/23829097/python-numpy-fastest-method-for-2d-kernel-rank-filtering-on-masked-arrays-and-o?rq=1
+
+    Notes:
+    This is equivalent to scipy.ndimage.uniform_filter, but can handle nan's,
+    and can use numpy nanmean/median/max/min functions.
+
+    Even if no_data_val is not specified, np.nan values in the input matrix
+    will be treated as np.nan are by np.nanmean. Still, those positions
+    will be assigned the mean value in their surrounding window.
+    If this is not desired, the np.nan fields that have been np.nan in the
+    input can just be set to np.nan again in the output.
+
+    Change function to nanmeadian, nanmax, nanmin as required.
+    """
+
+    assert size % 2 == 1, 'Please supply an odd size'
+    assert data.dtype == np.dtype('float64'), 'Input must have dtype(float64)'
+    rows, cols = data.shape
+
+    padded_A = np.empty(shape=(rows + size-1,
+                               cols + size-1),
+                        dtype=data.dtype)
+    padded_A[:] = np.nan
+    rows_pad, cols_pad = padded_A.shape
+
+    if no_data_val:
+        mask = data == no_data_val
+        data[mask] = np.nan
+
+    upleft_data_start = int((size - 1) / 2)
+    rl, cl = rows_pad - upleft_data_start, cols_pad - upleft_data_start
+    padded_A[upleft_data_start: rl, upleft_data_start: cl] = data.copy()
+
+    n, m = data.shape
+    strided_data = as_strided(padded_A, (n, m, size, size),
+                              padded_A.strides+padded_A.strides)
+    strided_data = strided_data.copy().reshape((n, m, size**2))
+
+    return func(strided_data, axis=2)
 
 
 def find_masked_rows(m, masking_value=0):
@@ -201,9 +279,9 @@ def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic,
         # breaks at ws = 1 because of 0 division, and 2 is not odd.
         if winsize < 3:
             winsize = 3
-        curr_ssim = compare_ssim(
-            reference, query, win_size=winsize)
-        results[ID] = curr_ssim
+        curr_ssim = compare_ssim(reference, query, win_size=winsize)
+        curr_SN = SN(reference, query)
+        results[ID] = (curr_ssim, curr_SN)
     logger.info(
         ('[WORKER #{0}]:'
          'Done! The following pairs were filtered out: {1}').format(
@@ -584,10 +662,11 @@ def post_process_simple(raw_results):
         *[(k, v)
           for k, v in raw_results.items()])
     for p, ID in enumerate(IDs):
-        ssim = scores[p]
+        ssim, sn = scores[p]
         rows.append({
             'ID': ID,
-            'ssim': ssim
+            'ssim': ssim,
+            'SN': sn
             })
 
     return rows
