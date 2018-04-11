@@ -158,7 +158,8 @@ with open('path_to_json_file', 'r') as f:
 ```
 
 
-When the -genome_scan flag is set, OUT will be the only output file, as no background calculation is done in that case.
+When the -genome_scan flag is set, OUT will be the only output file, as no background calculation is done in that case. OUT will then have the following format:
+\<comparison name/ID\> \<signal to noise score (SN)\> \<structural similarity score (ssim)\>, where SN can be used to filter out very noise pairs with low SN values.
 
 Optional arguments give you more control:
 
