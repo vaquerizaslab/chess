@@ -105,6 +105,8 @@ CHESS takes the same mandatory, positional arguments for both modes:
   (index/name), which is then used to refer to that region in sparse matrix format
   (see above).
 
+> NOTE: The required formats for the Hi-C matrix (sparse) and regions (BED) are compatible with the standard output of HiC-Pro (Servant et al. 2015).
+
 * A normalized Hi-C matrix file in sparse matrix format for the query sample.
 
 * A BED file with region information for the query Hi-C matrix.
