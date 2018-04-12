@@ -543,6 +543,148 @@ class Chess(object):
                     start += args.step
                     pair_id += 1
 
+    def filter(self, argv):
+        print(argv)
+        parser = MyParser(
+            description='''
+            Filter results of chess sim by p, z, ssim, SN value.
+
+            You can filter by any combination of the `-p` (p-value),
+            `-z` (z-value), `-s` (ssim) and `-n` (SN) flags.
+            Each flag takes two arguments, where the first has to be either
+            `geq` (greater-equal), `leq` (less-equal), `l` (less)
+            or `g` (greater) and the second the threshold value of the filter.
+            Example: if you want to filter extract those regions that yielded
+            a z-value greater or equal 2 in the comparison, you should run
+            `chess filter <chess_results> <chess_pairs> <output_file> -z geq 2`
+
+            If you don't specify any filters, this will simply convert
+            the output to BED format.
+
+            This produces two output BED files, one for the REF and one
+            for the QRY, unless --genome-scan is specified.
+            The <name> column of the BED file (4th) is used for the pair ID.
+            ''',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        parser.add_argument(
+            'chess_sim_results',
+            type=str,
+            help='''Tab seperated file (no header) with an <ID> column any of
+            <p-value>, <z-score>, <ssim>, <SN> columns.''')
+        parser.add_argument(
+            'pairs',
+            type=str,
+            help='''Region pairs file used as an input to chess sim
+            in the run that generated the chess_sim_results.''')
+        parser.add_argument(
+            'output',
+            type=str,
+            help='''Path to output file.''')
+        parser.add_argument(
+            '-p',
+            nargs=2,
+            default=[None, None],
+            metavar=('mode', 'value'),
+            help='''Filter by values in <p-value> column according to mode (geq or leq)
+            and value.''')
+        parser.add_argument(
+            '-z',
+            nargs=2,
+            default=[None, None],
+            metavar=('mode', 'value'),
+            help='''Filter by values in <z-value> column according to mode (geq or leq)
+            and value.''')
+        parser.add_argument(
+            '-s',
+            nargs=2,
+            default=[None, None],
+            metavar=('mode', 'value'),
+            help='''Filter by values in <ssim> column according to mode (geq or leq)
+            and value.''')
+        parser.add_argument(
+            '-n',
+            nargs=2,
+            default=[None, None],
+            metavar=('mode', 'value'),
+            help='''Filter by values in <SN> column according to mode (geq or leq)
+            and value.''')
+        parser.add_argument(
+            '--score',
+            default='z-score',
+            help='''Input file column to use for the <score> column
+            in the output BED.''')
+        parser.add_argument(
+            '--genome-scan',
+            action='set_true',
+            default=False,
+            help='''Write only one output BED file.''')
+        args = parser.parse_args(argv[2:])
+
+        import pandas as pd
+        from chess.helpers import load_pairs
+        from operator import itemgetter
+
+        results = pd.read_csv(args.chess_sim_results, sep='\t')
+
+        if args.score not in results.columns:
+            raise ValueError(('{} column chosen for the ouput'
+                              'score not found in input results file.').format(
+                              args.score))
+
+        filters = {
+            'p-value': args.p,
+            'z-value': args.z,
+            'ssim': args.s,
+            'SN': args.n
+        }
+
+        for column, (mode, value) in filters.items():
+            if mode is None or value is None:
+                continue
+            if column not in results.columns:
+                raise ValueError(('{} column not in results file.'.format(
+                    column)))
+            value = float(value)
+            if mode == 'geq':
+                results = results[results[column] >= value]
+            elif mode == 'leq':
+                results = results[results[column] <= value]
+            elif mode == 'g':
+                results = results[results[column] > value]
+            elif mode == 'l':
+                results = results[results[column] < value]
+            else:
+                raise ValueError(
+                    ('Specified mode {} for {} filter is not valid.'
+                     ' mode must be `geq` or `leq`.').format(
+                                  mode, column))
+
+        pairs = load_pairs(args.pairs)
+
+        beds = {
+            'REF': [],
+            'QRY': []}
+
+        for ID, (refreg, qryreg) in pairs.items():
+            curr_score = float(results[results['ID'] == ID][args.score])
+            if args.genome_scan:
+                p = [[refreg, 'REF']]
+            else:
+                p = [[refreg, 'REF'], [qryreg, 'QRY']]
+            for reg, k in p:
+                curr_line = [reg.chromosome, reg.start, reg.end,
+                             ID, curr_score, reg.strand, '\n']
+                beds[k].append(curr_line)
+
+        if args.genome_scan:
+            beds = {'genome_scan': beds['REF']}
+
+        for k, v in beds.items():
+            v.sort(key=itemgetter(0, 1))
+            with open(args.output + '_' + k, 'w') as f:
+                for line in v:
+                    f.write('\t'.join(line))
+
 
 def chess_parser():
     usage = '''\
@@ -551,7 +693,8 @@ def chess_parser():
         Commands:
             sim          Calculate structural similarity
             oe           Transform a Hi-C matrix to an observed/expected matrix
-            pairs        Make window pairs for CHESS genome scan
+            pairs        Make window pairs for chess genome scan
+            filter       Filter output of chess sim and save as BED file
 
         Run chess <command> -h for help on a specific command.
         '''
