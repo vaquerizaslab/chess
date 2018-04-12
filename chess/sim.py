@@ -14,9 +14,16 @@ from .helpers import load_matrix, load_regions, \
 logger = logging.getLogger(__name__)
 
 
-def SN(M1, M2, size=None):
-    if size is None:
-        size = 7
+def SN(M1, M2, size=7):
+    """Compute average of local signal to noise ratios in M1 - M2.
+
+    Slide a window of dimensions size^2 over M1 - M2, compute
+    abs(mean(window)) / var(window) in each and take mean of all windows.
+    :param M1: Numpy Matrix.
+    :param M2: Numpy Matrix.
+    :param size: edge length of sliding window (must be odd), defaults to 7
+    :returns: float, the average of the local signal to noise ratios.
+    """
     M = M1 - M2
     uM = filter_uniform_filter(M, size=size)
     vM = filter_uniform_filter(M, size=size, func=np.nanvar)
@@ -25,64 +32,42 @@ def SN(M1, M2, size=None):
     return float(SN)
 
 
-def filter_uniform_filter(data, size=3, no_data_val=None,
+def filter_uniform_filter(M, size=7, no_data_val=None,
                           func=np.nanmean):
-    """
-    ADAPTION FROM:
-        https://www.programcreek.com/python/example/93943/scipy.ndimage.uniform_filter
+    """Apply func to sliding window on input matrix.
 
-    CHANGES:
-
-        padding is of equal width around the original data
-        instead of just above and to the left, as in the original code.
-
-        dtype of input is required to be float64.
-
-        docstring changes.
-
-    Parameters
-    ----------
-    A = input data
-    size = odd number uniform filtering kernel size
-    no_data_val = value in matrix that is treated as no data value
-
-    Returns: nanmean of the matrix A filtered by a uniform kernel of size=size
-    -------
-    Adapted from:
-        http://stackoverflow.com/questions/23829097/python-numpy-fastest-method-for-2d-kernel-rank-filtering-on-masked-arrays-and-o?rq=1
-
-    Notes:
+    Adaption from:
+    www.programcreek.com/python/example/93943/scipy.ndimage.uniform_filter
     This is equivalent to scipy.ndimage.uniform_filter, but can handle nan's,
     and can use numpy nanmean/median/max/min functions.
-
-    Even if no_data_val is not specified, np.nan values in the input matrix
-    will be treated as np.nan are by np.nanmean. Still, those positions
-    will be assigned the mean value in their surrounding window.
-    If this is not desired, the np.nan fields that have been np.nan in the
-    input can just be set to np.nan again in the output.
-
-    Change function to nanmeadian, nanmax, nanmin as required.
+    :param M: input data, numpy matrix.
+    :param size: edge length of sliding window (must be odd), defaults to 7
+    :type size: number, optional
+    :param no_data_val: value in matrix that is treated as no data value,
+                        defaults to None
+    :param func: [description], defaults to np.nanmean
+    :returns: func of the matrix A filtered by a uniform kernel of size=size
     """
 
     assert size % 2 == 1, 'Please supply an odd size'
-    assert data.dtype == np.dtype('float64'), 'Input must have dtype(float64)'
-    rows, cols = data.shape
+    assert M.dtype == np.dtype('float64'), 'Input must have dtype(float64)'
+    rows, cols = M.shape
 
     padded_A = np.empty(shape=(rows + size-1,
                                cols + size-1),
-                        dtype=data.dtype)
+                        dtype=M.dtype)
     padded_A[:] = np.nan
     rows_pad, cols_pad = padded_A.shape
 
     if no_data_val:
-        mask = data == no_data_val
-        data[mask] = np.nan
+        mask = M == no_data_val
+        M[mask] = np.nan
 
     upleft_data_start = int((size - 1) / 2)
     rl, cl = rows_pad - upleft_data_start, cols_pad - upleft_data_start
-    padded_A[upleft_data_start: rl, upleft_data_start: cl] = data.copy()
+    padded_A[upleft_data_start: rl, upleft_data_start: cl] = M.copy()
 
-    n, m = data.shape
+    n, m = M.shape
     strided_data = as_strided(padded_A, (n, m, size, size),
                               padded_A.strides+padded_A.strides)
     strided_data = strided_data.copy().reshape((n, m, size**2))
@@ -180,7 +165,7 @@ def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic,
                              Defaults to False
     :returns: results dictionary of form:
               {
-                pair_id: similarity_score
+                pair_id: (similarity_score, signal_to_noise_value)
               }
     """
 
@@ -657,6 +642,31 @@ def post_process(raw_results, rounded_queries):
 
 
 def post_process_simple(raw_results):
+    """Reshape results to dataframe format.
+
+    Produce a dictionary representation of the raw_results that can be directly
+    transformed into a pandas dataframe.
+    :param raw_results: Dictionary holding the raw results as produced by
+                        :func:`~compare_structures_genome_scan`.
+    :param rounded_queries: Dictionary holding the regionstrings of the
+                            true query matrices for each pairwise comparison,
+                            as produced by
+                            :func:`~compare_structures_genome_scan`.
+    :returns: A list of result dictionaries of form:
+              [
+                {
+                    'ID': pair_id_1,
+                    'ssim': similarity_score_pair_1,
+                    'SN': signal_to_noise_value_1
+                },
+                {
+                    'ID': pair_id_2,
+                    'ssim': similarity_score_pair_2,
+                    'SN': signal_to_noise_value_2
+                },
+                ...
+              ]
+    """
     rows = []
     IDs, scores = zip(
         *[(k, v)
@@ -674,6 +684,20 @@ def post_process_simple(raw_results):
 
 def cleanup(chromosome_basenames, converted_oe_files=[], reference_ID='REF',
             query_ID='QRY', work_dir='./'):
+    """Delete intermediate files from working directory.
+
+    :param chromosome_basenames: chromosome names that were used to name the
+                                 the intermediate files.
+    :param converted_oe_files: list of paths to observed / expected
+                               transformed input Hi-C data, defaults to []
+    :param reference_ID: ID used for the reference in the current run,
+                         used as a prefix to the intermediate files,
+                         defaults to 'REF'
+    :param query_ID: ID used for the query in the current run,
+                         used as a prefix to the intermediate files,
+                         defaults to 'QRY'
+    :param work_dir: Working directory to clean, defaults to './'
+    """
 
     def remove(path):
         try:
@@ -692,7 +716,25 @@ def cleanup(chromosome_basenames, converted_oe_files=[], reference_ID='REF',
                     work_dir, sampleID + '_' + basename + ext))
 
 
-def distribute_workload(pairs, limit_background, p=1):
+def distribute_workload(pairs, limit_background=False, p=1):
+    """Distribute comparisons among the available threads.
+
+    :param pairs: Dictionary defining the comparison pairs, of form:
+                  {
+                    pair_id: (reference_region, query_region)
+                  },
+                  where reference_region and query_region
+                  are :class:`~GenomicRegion` objects.
+    :param limit_background: Bool, indicates whether the calculation of the
+                             background similarity distribution should be
+                             restricted to the syntenic / paired chromosome
+                             for each comparison pair, defaults to False
+    :param p: Number of available threads, defaults to 1
+    :returns: Dict specifying the comparisons for each thread, of form:
+              {
+                thread_id: subset_of_pairs_dict
+              }
+    """
     if limit_background:
         logger.warning(
             ('[MAIN]: --limit-background set.'
