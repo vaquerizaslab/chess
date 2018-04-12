@@ -613,7 +613,7 @@ class Chess(object):
             and value.''')
         parser.add_argument(
             '--score',
-            default='z-score',
+            default='ssim',
             help='''Input file column to use for the <score> column
             in the output BED.''')
         parser.add_argument(
