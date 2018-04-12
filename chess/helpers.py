@@ -159,6 +159,17 @@ def _open(file_name, mode='r'):
 
 
 def load_regions(file_name, sep=None):
+    """
+    Load regions from regions bed file.
+    :param file_name: Path to regions bed file.
+    :param sep: Delimiter in regions bed, defaults to None (splits by tab)
+    :returns: Tuple:
+                (
+                    List of :class:`~GenomicRegion` objects,
+                    ix_converter dict: {region_id: position_in_list},
+                    ix2region dict: {region_id: [chromosome, start, end]}
+                (
+    """
     regions = []
     ix2reg = {}
     ix_converter = None
@@ -262,17 +273,23 @@ def load_sparse_matrix(file_name, ix_converter=None, sep="\t"):
 
 
 def load_matrix(file_name, size=None, sep=None, ix_converter=None):
-    """
-    Load Hi-C matrix. Must be in sparse matrix format.
-    Region information corresponding to the rows in the Hi-C file
-    must be given in a separate BED file.
+    """Load Numpy matrix from Hi-C matrix file in sparse format.
+
+    :param file_name: Path to Hi-C matrix file in sparse format.
+    :param size: Size of the matrix (number of bins / edge length),
+                 defaults to None
+    :param sep: Delimiter in matrix file, defaults to None (splits by tab)
+    :param ix_converter: ix_converter dict corresponding to the matrix file,
+                         as produced by :func:`load_regions`, defaults to None
+    :returns: Numpy matrix.
     """
 
     if size is None:
         raise ValueError("Must provide matrix size!")
 
     m = np.zeros((size, size))
-    for source, sink, weight in edges_from_sparse_matrix(file_name, ix_converter=ix_converter, sep=sep):
+    for source, sink, weight in edges_from_sparse_matrix(
+                                file_name, ix_converter=ix_converter, sep=sep):
         m[source, sink] = weight
         m[sink, source] = weight
 
@@ -280,11 +297,17 @@ def load_matrix(file_name, size=None, sep=None, ix_converter=None):
 
 
 def load_pairs(file_name, sep=None):
-    """
-    Load reference and query map from bedpe file.
-    Expected colums:
-        chrm_ref, start_ref, end_ref, chrm_qry, start_qry, end_qry, id,
-        score (not used), strand_ref, strand_qry
+    """Load region pairs from bedpe file.
+
+    Read input bedpe file and convert to dict mapping the comparison ID to the
+    reference to query regions.
+    :param file_name: Path to input bedpe file. Expected columns:
+        chromosome_reference, start_reference, end_reference,
+        chromosome_query, start_query, end_query,
+        comparison_id, dummy column (not used), strand_reference, strand_query
+    :param sep: Delimiter in bedpe file, defaults to None (splits by tab)
+    :returns: Dict of form {ID: (reference_region, query_region)}, with
+              *region being :class:`GenomicRegion` objects.
     """
     pairs = {}
     with _open(file_name, 'r') as f:
@@ -314,9 +337,35 @@ def load_pairs(file_name, sep=None):
 
 def split_by_chrom(matrix_file, regions, ix2reg, full_matrix_ix_converter=None,
                    sep=None, sampleID=str(), work_dir='./'):
-    """
-    Split sparse matrix into single chromosome matrix files
-    + the corresponding region bed files.
+    """Split full-genome sparse matrix into seperate chromosome files.
+
+    Per single-chromosome sparse matrix, write a corresponding regions.bed
+    to the working dir.
+    Store the ix_converter and chromosome size info necessary for
+    loading the file with :func:`load_matrix` and write them
+    to the working dir in combined files for all chromosomes.
+    :param file_name: Path to  Hi-C matrix file in sparse format.
+    :param file_name: Path to regions bed file
+                      corresponding to the sparse matrix.
+    :param ix2reg: ix2reg dictionary corresponding to the regions file
+                   as produced by :func:`load_regions`
+    :param full_matrix_ix_converter: ix_converter dictionary corresponding
+                                     to the regions file, as produced by
+                                     :func:`load_regions`, defaults to None
+    :param sep: Delimiter in matrix file, defaults to None (splits by tab)
+    :param sampleID: ID of the sample, used as a prefix to the names of the
+                     ouput files, defaults to str()
+    :param work_dir: Path to the directory to which the output files
+                     will be written, defaults to './'
+    :returns: Tuple:
+                (
+                    chromosome sizes dict: {chromosome_id: chromosome_size},
+                    ix_converter dict:
+                            {
+                                chromosome_id:
+                                    {region_id: position in chromosome_matrix},
+                            }
+                )
     """
 
     # sparse matrices
