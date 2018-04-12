@@ -245,7 +245,7 @@ You can use the following optional arguments to tweak `chess pairs`' behaviour:
 
 * The path to the output file. (REF and QUERY or genome_scan will be appended to that filename)
 
-With the following arguments you can choose how to filter the results. `mode` has to be `geq` (greated equal), `leq` (less equal), `l` (less) or `g` (greater). `value` defines the threshold value for the filter. You can combine any number of filters, as long as the corresponding columns are present in the results file. If you do not specify any filters, the results will simply be converted to BED format.
+You can use the following parameters to specify how to filter the results. `mode` has to be `geq` (greated equal), `leq` (less equal), `l` (less) or `g` (greater). `value` defines the threshold value for the filter. You can combine any number of filters, as long as the corresponding columns are present in the results file. If you do not specify any filters, the results will simply be converted to BED format.
 
 * `-p mode value`: filter by p-value (p column)
 
