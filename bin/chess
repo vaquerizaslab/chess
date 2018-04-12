@@ -547,16 +547,19 @@ class Chess(object):
         print(argv)
         parser = MyParser(
             description='''
-            Filter results of chess sim by p, z, ssim, SN value.
+            Filter results of `chess sim` by p, z, ssim, SN value.
 
-            You can filter by any combination of the `-p` (p-value),
-            `-z` (z-value), `-s` (ssim) and `-n` (SN) flags.
+            You can filter by any combination of the `-p`,
+            `-z` (z-score), `-s` (ssim) and `-n` (SN) flags.
             Each flag takes two arguments, where the first has to be either
             `geq` (greater-equal), `leq` (less-equal), `l` (less)
             or `g` (greater) and the second the threshold value of the filter.
-            Example: if you want to filter extract those regions that yielded
-            a z-value greater or equal 2 in the comparison, you should run
-            `chess filter <chess_results> <chess_pairs> <output_file> -z geq 2`
+
+            Example:
+
+                if you want to extract regions that yielded
+                a z-value greater or equal 2 in the comparison, you should run
+                `chess filter <chess_results> <chess_pairs> <output_file> -z geq 2`
 
             If you don't specify any filters, this will simply convert
             the output to BED format.
@@ -565,12 +568,12 @@ class Chess(object):
             for the QRY, unless --genome-scan is specified.
             The <name> column of the BED file (4th) is used for the pair ID.
             ''',
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+            formatter_class=argparse.RawTextHelpFormatter)
         parser.add_argument(
             'chess_sim_results',
             type=str,
             help='''Tab seperated file (no header) with an <ID> column any of
-            <p-value>, <z-score>, <ssim>, <SN> columns.''')
+            <p>, <z-score>, <ssim>, <SN> columns.''')
         parser.add_argument(
             'pairs',
             type=str,
@@ -585,28 +588,28 @@ class Chess(object):
             nargs=2,
             default=[None, None],
             metavar=('mode', 'value'),
-            help='''Filter by values in <p-value> column according to mode (geq or leq)
+            help='''Filter by values in <p> column according to mode (geq, leq, l, or g)
             and value.''')
         parser.add_argument(
             '-z',
             nargs=2,
             default=[None, None],
             metavar=('mode', 'value'),
-            help='''Filter by values in <z-value> column according to mode (geq or leq)
+            help='''Filter by values in <z-score> column according to mode (geq, leq, l, or g)
             and value.''')
         parser.add_argument(
             '-s',
             nargs=2,
             default=[None, None],
             metavar=('mode', 'value'),
-            help='''Filter by values in <ssim> column according to mode (geq or leq)
+            help='''Filter by values in <ssim> column according to mode (geq, leq, l, or g)
             and value.''')
         parser.add_argument(
             '-n',
             nargs=2,
             default=[None, None],
             metavar=('mode', 'value'),
-            help='''Filter by values in <SN> column according to mode (geq or leq)
+            help='''Filter by values in <SN> column according to mode (geq, leq, l, or g)
             and value.''')
         parser.add_argument(
             '--score',
@@ -615,7 +618,7 @@ class Chess(object):
             in the output BED.''')
         parser.add_argument(
             '--genome-scan',
-            action='set_true',
+            action='store_true',
             default=False,
             help='''Write only one output BED file.''')
         args = parser.parse_args(argv[2:])
@@ -632,8 +635,8 @@ class Chess(object):
                               args.score))
 
         filters = {
-            'p-value': args.p,
-            'z-value': args.z,
+            'p': args.p,
+            'z-score': args.z,
             'ssim': args.s,
             'SN': args.n
         }
@@ -665,8 +668,9 @@ class Chess(object):
             'REF': [],
             'QRY': []}
 
-        for ID, (refreg, qryreg) in pairs.items():
-            curr_score = float(results[results['ID'] == ID][args.score])
+        for index, row in results.iterrows():
+            ID, curr_score = str(int(row.ID)), row[args.score]
+            refreg, qryreg = pairs[ID]
             if args.genome_scan:
                 p = [[refreg, 'REF']]
             else:
@@ -683,7 +687,7 @@ class Chess(object):
             v.sort(key=itemgetter(0, 1))
             with open(args.output + '_' + k, 'w') as f:
                 for line in v:
-                    f.write('\t'.join(line))
+                    f.write('\t'.join([str(e) for e in line]))
 
 
 def chess_parser():
