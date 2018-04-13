@@ -33,6 +33,7 @@ You can load any of these files into python like this:
 
 ```python
 import numpy as np
+from matplotlib import pyplot as plt
 
 # matrix file generated with ./make_synthetic_references.py ./ -n 10 -b 100
 file = './10_test_reference_matrices_100bins.npy'
@@ -41,7 +42,17 @@ matrices = np.load(file)
 
 # load the first matrix
 matrix_1 = matrices[0]
+
+# plot matrix and save plot
+plt.figure()
+plt.imshow(matrix_1, cmap='YlOrRd', vmin=0, vmax=1000)
+plt.colorbar()
+plt.savefig('example_matrix.pdf')
 ```
+
+Your example_matrix.pdf might then look similar to this:
+
+![Example matrix](matrix.pdf)
 
 
 ## Testing CHESS on synthetic data
