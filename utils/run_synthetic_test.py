@@ -487,7 +487,7 @@ if __name__ == '__main__':
         Create query matrices and a pool of matrices forming the background
         model according to input parameters.
         Return .csv with raw ssim score, p and z-value, window size,
-        matrix type and id (corresponding to the input references columns).''',
+        matrix type and id (corresponding to the input references indices).''',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         'reference_matrices',
