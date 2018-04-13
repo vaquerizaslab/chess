@@ -47,12 +47,12 @@ matrix_1 = matrices[0]
 plt.figure()
 plt.imshow(matrix_1, cmap='YlOrRd', vmin=0, vmax=1000)
 plt.colorbar()
-plt.savefig('example_matrix.pdf')
+plt.savefig('example_matrix.png')
 ```
 
 Your example_matrix.pdf might then look similar to this:
 
-![Example matrix](matrix.pdf)
+![Example matrix](matrix.png)
 
 
 ## Testing CHESS on synthetic data
