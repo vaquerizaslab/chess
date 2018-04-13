@@ -269,6 +269,10 @@ def add_features(blank, borders, loops):
                 anchor_b_e = end + rad
                 m[anchor_a_s:anchor_a_e, anchor_b_s:anchor_b_e] += intensity
 
+    for i in range(np.shape(m)[0]):
+        for j in range(i, np.shape(m)[1]):
+            m[j][i] = m[i][j]
+
     return m
 
 
