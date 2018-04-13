@@ -50,7 +50,7 @@ plt.colorbar()
 plt.savefig('example_matrix.png')
 ```
 
-Your example_matrix.pdf might then look similar to this:
+Your example_matrix.png might then look similar to this:
 
 ![Example matrix](matrix.png)
 
