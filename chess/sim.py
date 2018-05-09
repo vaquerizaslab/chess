@@ -491,13 +491,19 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
             worker_ID))
 
         for region in qrychrm_r:
-            for ID, reference_pos in references[0].items():
+            for ID, reference_native in references[0].items():
 
                 if limit_background:
                     if pairs[ID][1].chromosome != chrom:
                         continue
 
-                reference_neg = references[1][ID]
+                native_orientation = rounded_queries[ID].split(':')[-1]
+                if native_orientation == '+':
+                    orientation_order = ['+', '-']
+                elif native_orientation == '-':
+                    orientation_order = ['-', '+']
+
+                reference_flipped = references[1][ID]
                 query_bins = query_sizes[ID]
 
                 # get query position
@@ -518,9 +524,9 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
                 # resize
                 if size_factors[ID] > 1:
                     query = resize(
-                        query, np.shape(reference_pos),
+                        query, np.shape(reference_native),
                         order=0, mode='reflect').astype(np.float64)
-                if np.shape(reference_pos) != np.shape(query):
+                if np.shape(reference_native) != np.shape(query):
                     logger.debug('[WORKER #{0}] ERROR! Block ID: {1}'.format(
                         worker_ID, ID))
                     logger.debug(
@@ -528,7 +534,7 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
                             worker_ID, size_factors[ID]))
                     logger.debug(
                         '[WORKER #{0}] ERROR! Reference shape: {1}'.format(
-                            worker_ID, np.shape(reference_pos)))
+                            worker_ID, np.shape(reference_native)))
                     logger.debug(
                         '[WORKER #{0}] ERROR! Query shape: {1}'.format(
                             worker_ID, np.shape(query)))
@@ -550,9 +556,9 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
 
                 # compare
                 for flip, reference in enumerate(
-                        [reference_pos, reference_neg]):
+                        [reference_native, reference_flipped]):
                     # create entry in results
-                    orient = '-' if flip else '+'
+                    orient = orientation_order[orient_position]
                     curr_win = ':'.join(
                                 (win_chrm,
                                  str(win_start),
