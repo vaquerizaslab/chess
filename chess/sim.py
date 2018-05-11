@@ -497,7 +497,7 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
                     if pairs[ID][1].chromosome != chrom:
                         continue
 
-                native_orientation = rounded_queries[ID].split(':')[-1]
+                native_orientation = pairs[ID][0].strand
                 if native_orientation == '+':
                     orientation_order = ['+', '-']
                 elif native_orientation == '-':
@@ -555,7 +555,7 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
                         continue
 
                 # compare
-                for flip, reference in enumerate(
+                for orient_position, reference in enumerate(
                         [reference_native, reference_flipped]):
                     # create entry in results
                     orient = orientation_order[orient_position]
@@ -572,7 +572,7 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
                         trunc_query = query
                     else:
                         target_rows = np.union1d(
-                            idx, reference_masks[flip][ID])
+                            idx, reference_masks[orient_position][ID])
                         trunc_reference = remove_rows(reference, target_rows)
                         trunc_query = remove_rows(query, target_rows)
 
