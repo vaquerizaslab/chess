@@ -527,13 +527,10 @@ class Chess(object):
         with open(args.output, 'w') as f:
             pair_id = 0
             for chromosome in chromosomes:
-                pairs_dict = {'patient': {}, 'control': {}}
                 chromosome_size = chromosome_sizes[chromosome]
                 start = 1
                 while start <= (chromosome_size - args.window):
                     end = start + args.window
-                    for sample, d in pairs_dict.items():
-                        d[pair_id] = (chromosome, start, end, '+')
                     f.write(
                         '\t'.join(
                             str(e) for e in [chromosome, start, end,
