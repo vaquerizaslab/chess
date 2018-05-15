@@ -529,7 +529,7 @@ class Chess(object):
             for chromosome in chromosomes:
                 pairs_dict = {'patient': {}, 'control': {}}
                 chromosome_size = chromosome_sizes[chromosome]
-                start = 0
+                start = 1
                 while start <= (chromosome_size - args.window):
                     end = start + args.window
                     for sample, d in pairs_dict.items():
