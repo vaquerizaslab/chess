@@ -19,7 +19,9 @@ CHESS is a tool for the assessment of similarity between Hi-C matrices using str
 
 ## Requirements
 
-CHESS was written and tested using Python 3.6.1 on Linux and macOS.
+CHESS was written and tested using Python 3.6.1 on Scientific Linux (6.10) and OS X El Capitan (10.11.6).
+
+It requires the packages Scipy (1.0.0), Numpy (1.14.0), and skimage (0.13.1), pandas (0.22.0), pathos (0.2.1) and future (0.16.0).
 
 ## Installation
 
@@ -29,7 +31,7 @@ You can install CHESS from the command line using PyPI:
 pip install chess-hic
 ```
 
-or download the code from our [GitHub repo](https://github.com/vaquerizaslab/chess/) and install manually
+or download the code from our [GitHub repo](https://github.com/vaquerizaslab/CHESS) and install manually
 
 ```bash
 python setup.py install
