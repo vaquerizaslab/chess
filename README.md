@@ -25,7 +25,7 @@ It requires the packages Scipy (1.0.0), Numpy (1.14.0), and skimage (0.13.1), pa
 
 ## Installation
 
-You can install CHESS from the command line using PyPI:
+CHESS can be installed within just a few minutes from the command line using PyPI:
 
 ```
 pip install chess-hic
@@ -58,7 +58,7 @@ examples/Dmel_genome_scan/Dmel_zld_kd_wt_nc14_chrm_X_250kwindow_25kbstep.pairs.g
 examples/Dmel_genome_scan/comparison_results.tsv \
 --set-wd examples/Dmel_genome_scan --genome-scan
 ```
-> NOTE: Running this example might take some time. To speed it up, you can use the `-p <int>` flag to specify the number of cores to use (default: 1) and split the workload.
+> NOTE: This example run should finish within 2 minutes on a single core. However, to speed it up, you can use the `-p <int>` flag to specify the number of cores to use (default: 1) and split the workload.
 
 
 ### Comparing regions accross species
