@@ -6,6 +6,10 @@ __version__ = None
 exec(open('chess/version.py').read())
 
 
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+
 class CleanCommand(Command):
     """
     Custom clean command to tidy up the project root.
@@ -23,9 +27,12 @@ class CleanCommand(Command):
 
 
 setup(
-    name='chess',
+    name='chess-hic',
     version=__version__,
     description='Comparison of Hi-C Experiments using Structural Similarity.',
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url='https://github.com/vaquerizaslab/chess',
     setup_requires=[
         'setuptools>=18.0'
     ],
@@ -42,4 +49,9 @@ setup(
     cmdclass={
         'clean': CleanCommand
     },
+    classifiers=(
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ),
 )
