@@ -21,9 +21,12 @@ CHESS is a tool for the assessment of similarity between Hi-C matrices using str
 
 CHESS was written and tested using Python 3.6.1 on Scientific Linux (6.10) and OS X El Capitan (10.11.6).
 
-It requires the packages Scipy (1.0.0), Numpy (1.14.0), and skimage (0.13.1), pandas (0.22.0), pathos (0.2.1) and future (0.16.0).
+It requires the packages `scipy` (1.0.0), `numpy` (1.14.0), `scikit-image` (0.13.1), `pandas` (0.22.0),
+`pathos` (0.2.1), and `future` (0.16.0).
 
 ## Installation
+
+### Pypi package index (`pip`)
 
 CHESS can be installed within just a few minutes from the command line using PyPI:
 
@@ -31,15 +34,24 @@ CHESS can be installed within just a few minutes from the command line using PyP
 pip install chess-hic
 ```
 
-or download the code from our [GitHub repo](https://github.com/vaquerizaslab/CHESS) and install manually
+### From source
+
+You can also download the code from our [GitHub repo](https://github.com/vaquerizaslab/chess)
+and install CHESS manually. In this case, CHESS dependencies won't be installed automatically,
+so please ensure you have the necessary [requirements](#requirements) installed.
 
 ```bash
+git clone https://github.com/vaquerizaslab/chess  # or download manually
+cd chess
 python setup.py install
 ```
 
+
 ## Quick start
 
-After installation, you can use the example data to familiarize yourself with the applications of CHESS implemented in the current version.
+After installation, you can use the example data to familiarize yourself with the applications
+of CHESS implemented in the current version. If you installed via `pip`, you can download the
+examples from our [GitHub repo](https://github.com/vaquerizaslab/chess).
 
 Use `chess -h` for quick help and orientation.
 
