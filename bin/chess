@@ -503,13 +503,13 @@ class Chess(object):
         else:
             try:
                 chromosome_sizes = pbt.chromsizes(args.genome)
-                if chromosome_sizes == {}:
-                    raise
+                if len(chromosome_sizes) == 0:
+                    raise ValueError("Genome not recognised in pybedtools.chromsizes: {}".format(args.genome))
                 # pbt has (start, end) as values,
                 # where start is usually 0
                 chromosome_sizes = {
                     k: v[1] for k, v in chromosome_sizes.items()}
-            except:
+            except ValueError:
                 logger.info((
                     'No entry found with pybedtools.'
                     ' Trying to read from file.'))
@@ -520,7 +520,7 @@ class Chess(object):
             try:
                 chromosome_sizes[args.chromosome]
                 chromosomes = [args.chromosome]
-            except:
+            except KeyError:
                 raise ValueError((
                     'Specified chromosome has no chromosome size entry.'))
 
