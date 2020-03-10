@@ -275,6 +275,44 @@ The following parameters give you some control over the output:
 
 * `--genome-scan`: write only a single output BED. You can use this to avoid generating redundant files when the results you want to filter were generated in a `chess sim ... --genome-scan` run.
 
+### extract
+`chess extract` allows you to extract the specific features from significant different regions identified by `chess sim`. It outputs the coordinates of the gained and lost features, and its submatrix.
+
+`chess extract` takes following mandatory arguments:
+
+* A BEDPE file (pairs) file that specifies which regions in the reference matrix should
+  be compared to which regions in the query matrix that have been observed to be significantly different by `chess sim`. This should be a tab-delimited file
+  with columns:
+  \<ref chromosome\> \<ref start\> \<ref end\> \<qry chromosome\> \<qry start\> \<qry end\> \<comparison name/id\> \<anything, not used\> \<ref strand\> \<qry strand\>
+  The 8th column is required in order to match the BEDPE standard format (see http://bedtools.readthedocs.io/en/latest/content/general-usage.html).
+  This file must not contain any headers. The end coordinates are exclusive.
+  
+* A normalized Hi-C matrix file in sparse matrix format for the reference sample.
+
+* A BED file with region information for the reference Hi-C matrix.
+
+* A normalized Hi-C matrix file in sparse matrix format for the query sample.
+
+* A BED file with region information for the query Hi-C matrix.
+
+* The path to the output directory.
+
+### crosscorrelate
+`chess crosscorrelate` allows to classify the extracted features by `chess extract` in order to obtain the main structural clusters. It will compute a 2D-crosscorrelation between all the features, and will calculate the optimal number of clusters according to the Elbow-index. It outputs the number of clusters and the classification of the specific features according to their structural pattern similarity.
+
+`chess crosscorrelate` takes following mandatory arguments:
+
+* The output file from `chess extract` that contains the submatrices of the features.
+
+* A BEDPE file (pairs) file that specifies which regions in the reference matrix should
+  be compared to which regions in the query matrix that have been observed to be significantly different by `chess sim`. This should be a tab-delimited file
+  with columns:
+  \<ref chromosome\> \<ref start\> \<ref end\> \<qry chromosome\> \<qry start\> \<qry end\> \<comparison name/id\> \<anything, not used\> \<ref strand\> \<qry strand\>
+  The 8th column is required in order to match the BEDPE standard format (see http://bedtools.readthedocs.io/en/latest/content/general-usage.html).
+  This file must not contain any headers. The end coordinates are exclusive.
+  
+ * Path to store the outputs.
+
 
 ## References
 
