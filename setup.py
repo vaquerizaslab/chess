@@ -44,6 +44,7 @@ setup(
         'pathos',
         'pandas',
         'scipy',
+        'kneed',
     ],
     scripts=['bin/chess'],
     cmdclass={
