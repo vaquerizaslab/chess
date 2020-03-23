@@ -45,6 +45,7 @@ setup(
         'pandas',
         'scipy',
         'kneed',
+        'tqdm',
     ],
     scripts=['bin/chess'],
     cmdclass={

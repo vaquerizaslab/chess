@@ -24,7 +24,7 @@ CHESS is a tool for the assessment of similarity between Hi-C matrices using str
 CHESS was written and tested using Python 3.6.1 on Scientific Linux (6.10) and OS X El Capitan (10.11.6).
 
 It requires the packages `scipy` (1.0.0), `numpy` (1.14.0), `scikit-image` (0.13.1), `pandas` (0.22.0),
-`pathos` (0.2.1), and `future` (0.16.0).
+`pathos` (0.2.1), `kneed`, `tqdm` and `future` (0.16.0).
 
 ## Installation
 
