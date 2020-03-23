@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-import os
 from os import path
 import logging
-from collections                  import defaultdict
 import numpy as np
 from scipy import ndimage as ndi
 from skimage import restoration
@@ -14,7 +12,9 @@ from numpy import inf
 from scipy.ndimage import zoom
 import warnings
 from future.utils import string_types
-from .helpers import load_regions, load_sparse_matrix, sub_matrix_from_edges_dict
+from .helpers import (
+    load_regions, load_sparse_matrix, sub_matrix_from_edges_dict
+    )
 warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)
 
