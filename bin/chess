@@ -202,7 +202,7 @@ class Chess(object):
         from chess.oe import observed_expected
         from multiprocessing.pool import ThreadPool as Pool
         import numpy as np
-        from collections import defaultdict
+        # from collections import defaultdict
 
         reference_regions_file = args.reference_regions
         reference_matrix_file = args.reference_sparse
@@ -781,10 +781,10 @@ class Chess(object):
 
         parser.add_argument(
             'pairs',
-        type=str,
-        help='''Region pairs that have been identified to 
-        be significantly different. Must be in bedpe format with chrom1, start1, ...
-        corresponding to reference and chrom2, start2, ... to query.''')
+            type=str,
+            help='''Region pairs that have been identified to 
+            be significantly different. Must be in bedpe format with chrom1, start1, ...
+            corresponding to reference and chrom2, start2, ... to query.''')
 
         parser.add_argument(
             'reference_sparse',
@@ -819,8 +819,7 @@ class Chess(object):
             help='''Path to outfile.''')
 
         args = parser.parse_args(argv[2:])
-        from chess.helpers import load_pairs_iter, \
-            edges_from_sparse_matrix, load_regions, \
+        from chess.helpers import load_pairs_iter, load_regions, \
             region_interval_trees, edges_dict
         from chess.get_structures import extract_structures, get_sparse_matrix
 
@@ -847,16 +846,21 @@ class Chess(object):
 
         logger.info('[MAIN]: Loading region pairs')
 
-
         pairs = list(load_pairs_iter(pairs_file))
-        logger.info('[MAIN]: Applying image filtering to identify specific structures')
-        extract_structures(reference_edges, reference_region_trees,query_edges, query_region_trees, pairs, output_file)
+        logger.info(
+            '[MAIN]: Applying image filtering to identify specific structures')
+        extract_structures(
+            reference_edges,
+            reference_region_trees,
+            query_edges,
+            query_region_trees,
+            pairs, output_file)
         logger.info('[MAIN]: Results collected')
 
     def crosscorrelate(self, argv):
         parser = MyParser(
             description='''
-            2D crosscorrelation of the specific substructures extracted from the 
+            2D crosscorrelation of the specific substructures extracted from the
             CHESS significant different regions''',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
@@ -867,10 +871,10 @@ class Chess(object):
 
         parser.add_argument(
             'pairs',
-        type=str,
-        help='''Region pairs that have been identified to 
-        be significantly different. Must be in bedpe format with chrom1, start1, ...
-        corresponding to reference and chrom2, start2, ... to query.''')
+            type=str,
+            help='''Region pairs that have been identified to 
+            be significantly different. Must be in bedpe format with chrom1, start1, ...
+            corresponding to reference and chrom2, start2, ... to query.''')
 
         parser.add_argument(
             'out',
@@ -887,6 +891,7 @@ class Chess(object):
         output_file = args.out
         pairs = list(load_pairs_iter(pairs_file))
         correlate2d(input_file, output_file, pairs)
+
 
 def chess_parser():
     usage = '''\
