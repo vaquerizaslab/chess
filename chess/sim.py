@@ -6,7 +6,7 @@ import numpy as np
 from math import ceil
 from scipy.stats import zscore
 from skimage.transform import resize
-from skimage.measure import compare_ssim
+from skimage.metrics import structural_similarity
 from numpy.lib.stride_tricks import as_strided
 from .helpers import load_matrix, load_regions, \
                      sub_matrix_regions, GenomicRegion
@@ -264,7 +264,7 @@ def compare_structures_genome_scan(reference_ID, query_ID, sampleID2hic,
         # breaks at ws = 1 because of 0 division, and 2 is not odd.
         if winsize < 3:
             winsize = 3
-        curr_ssim = compare_ssim(reference, query, win_size=winsize)
+        curr_ssim = structural_similarity(reference, query, win_size=winsize)
         curr_SN = SN(reference, query)
         results[ID] = (curr_ssim, curr_SN)
     logger.info(
@@ -588,7 +588,7 @@ def compare_structures_sliding_window(reference_ID, query_ID, sampleID2hic,
                     # breaks at ws = 1 because of 0 division, and 2 is not odd.
                     if winsize < 3:
                         winsize = 3
-                    curr_ssim = compare_ssim(
+                    curr_ssim = structural_similarity(
                         trunc_reference, trunc_query, win_size=winsize)
                     results[ID][curr_win] = curr_ssim
 
