@@ -18,6 +18,7 @@ from .helpers import (
 warnings.filterwarnings("ignore")
 logger = logging.getLogger(__name__)
 
+
 def get_sparse_matrix(regions, sparse_matrix):
     '''Get all the sparse HiC matrix from the bed file'''
     ix_converter = None
@@ -25,7 +26,8 @@ def get_sparse_matrix(regions, sparse_matrix):
         regions, ix_converter, _ = load_regions(regions)
 
     if isinstance(sparse_matrix, string_types):
-        sparse_matrix = load_sparse_matrix(sparse_matrix, ix_converter=ix_converter)
+        sparse_matrix = load_sparse_matrix(
+            sparse_matrix, ix_converter=ix_converter)
 
     return regions, sparse_matrix
 
@@ -74,18 +76,31 @@ def get_info_feature(labels, submatrix, outfile, position, area, reg):
     return position
 
 
-def extract_structures(reference_edges,reference_regions,query_edges, query_regions,pairs, output):
+def extract_structures(
+    reference_edges,
+    reference_regions,
+    query_edges,
+    query_regions,
+    pairs,
+    output
+):
     pos_query = 0
     pos_reference = 0
 
     w1 = open(path.join(output, 'gained_features.tsv'), '+w')
-    w2 = open(path.join(output,'lost_features.tsv'), '+w')
+    w2 = open(path.join(output, 'lost_features.tsv'), '+w')
 
     for pair_ix, reference_region, query_region in pairs:
-        reference, ref_rs = sub_matrix_from_edges_dict(reference_edges, reference_regions,
-                                                           reference_region, default_weight=0.)
-        query, qry_rs = sub_matrix_from_edges_dict(query_edges, query_regions,
-                                               query_region, default_weight=0.)
+        reference, ref_rs = sub_matrix_from_edges_dict(
+            reference_edges,
+            reference_regions,
+            reference_region,
+            default_weight=0.)
+        query, qry_rs = sub_matrix_from_edges_dict(
+            query_edges,
+            query_regions,
+            query_region,
+            default_weight=0.)
         area = int((5 * np.shape(query)[0]) / 100)
         size = np.shape(query)[0]
         or_matrix = np.log(np.divide(query, reference))
@@ -100,10 +115,20 @@ def extract_structures(reference_edges,reference_regions,query_edges, query_regi
         negative = negative * -1
 
         # denoise
-        denoise_positive = restoration.denoise_bilateral(positive, sigma_color=np.mean(positive),
-                                                         win_size=3, sigma_spatial=3, bins=size, multichannel=False)
-        denoise_negative = restoration.denoise_bilateral(negative, sigma_color=np.mean(negative),
-                                                         win_size=3, sigma_spatial=3, bins=size, multichannel=False)
+        denoise_positive = restoration.denoise_bilateral(
+            positive,
+            sigma_color=np.mean(positive),
+            win_size=3,
+            sigma_spatial=3,
+            bins=size,
+            multichannel=False)
+        denoise_negative = restoration.denoise_bilateral(
+            negative,
+            sigma_color=np.mean(negative),
+            win_size=3,
+            sigma_spatial=3,
+            bins=size,
+            multichannel=False)
         # smooth
         filter_positive = ndi.median_filter(denoise_positive, 9)
         filter_negative = ndi.median_filter(denoise_negative, 9)
@@ -139,5 +164,7 @@ def extract_structures(reference_edges,reference_regions,query_edges, query_regi
         rot_query = ndi.rotate(zm1_query, 45, reshape=False)
 
         # get output (file with label and submatrices)
-        pos_query = get_info_feature(label_x1, rot_query, w1, pos_query, area, pair_ix)
-        pos_reference = get_info_feature(label_x2, rot_reference, w2, pos_reference, area, pair_ix)
+        pos_query = get_info_feature(
+            label_x1, rot_query, w1, pos_query, area, pair_ix)
+        pos_reference = get_info_feature(
+            label_x2, rot_reference, w2, pos_reference, area, pair_ix)
