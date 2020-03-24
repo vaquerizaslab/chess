@@ -2,7 +2,11 @@ import io
 import gzip
 import numpy as np
 import os
+import intervaltree
 from future.utils import string_types
+from collections import defaultdict
+import logging
+logger = logging.getLogger(__name__)
 
 
 class GenomicRegion(object):
@@ -158,7 +162,7 @@ def _open(file_name, mode='r'):
     return open(file_name, mode=mode)
 
 
-def load_regions(file_name, sep=None):
+def load_regions(file_name, sep=None, ignore_ix=False):
     """
     Load regions from regions bed file.
     :param file_name: Path to regions bed file.
@@ -183,7 +187,7 @@ def load_regions(file_name, sep=None):
                 end = int(fields[2])
                 ix = i
                 ix2reg[ix] = [chromosome, int(fields[1]), int(fields[2])]
-                if len(fields) > 3 and fields[3] != '.':  # HicPro
+                if not ignore_ix and len(fields) > 3 and fields[3] != '.':  # HicPro
                     if ix_converter is None:
                         ix_converter = dict()
                     if fields[3] in ix_converter:
@@ -202,6 +206,19 @@ def load_regions(file_name, sep=None):
     return regions, ix_converter, ix2reg
 
 
+def region_interval_trees(regions):
+    chromosome_intervals = defaultdict(list)
+    for region in regions:
+        interval = intervaltree.Interval(region.start - 1, region.end, data=region)
+        chromosome_intervals[region.chromosome].append(interval)
+
+    region_trees = dict()
+    for chromosome, intervals in chromosome_intervals.items():
+        region_trees[chromosome] = intervaltree.IntervalTree(intervals)
+
+    return region_trees
+
+
 def sub_regions(regions, region):
     """
     Get regions from a list the overlap with another region.
@@ -211,21 +228,40 @@ def sub_regions(regions, region):
     if isinstance(region, string_types):
         region = GenomicRegion.from_string(region)
 
-    sr = []
-    start_ix = None
-    end_ix = None
-    for i, r in enumerate(regions):
-        if (r.chromosome == region.chromosome
-                and r.start <= region.end and r.end >= region.start):
-            if start_ix is None:
-                start_ix = i
-            end_ix = i
-            sr.append(r.copy())
-        else:
-            if end_ix is not None:
-                break
+    # interval tree?
+    try:
+        rt = regions[region.chromosome]
 
-    if start_ix is None or end_ix is None:
+        ixs = []
+        sr = []
+        for interval in rt[region.start - 1: region.end]:
+            hit_region = interval.data
+            ixs.append(hit_region.ix)
+            sr.append(hit_region)
+        start_ix = min(ixs)
+        end_ix = max(ixs)
+
+    # region list
+    except TypeError:
+        sr = []
+        start_ix = None
+        end_ix = None
+        for i, r in enumerate(regions):
+            if (r.chromosome == region.chromosome
+                    and r.start <= region.end and r.end >= region.start):
+                if start_ix is None:
+                    start_ix = i
+                end_ix = i
+                sr.append(r.copy())
+            else:
+                if end_ix is not None:
+                    break
+    except IndexError:
+        sr = []
+        start_ix = None
+        end_ix = None
+
+    if len(sr) == 0:
         raise ValueError("Region not found in dataset! {}:{}-{}".format(
             region.chromosome, region.start, region.end))
 
@@ -247,32 +283,74 @@ def sub_matrix_regions(hic_matrix, regions, region):
     return np.copy(hic_matrix[start_ix:end_ix+1, start_ix:end_ix+1]), sr
 
 
+def sub_matrix_from_edges_dict(edges, regions, region, default_weight=0.0):
+    """
+    Get a square sub Hi-C matrix that overlaps a given region.
+    :param edges: A dict of the form { source_ix1: { sink_ix1: weight1, sink_ix2: weight2, ...}, ...}
+    :param regions: List of :class:`~GenomicRegion` or dict of :class:`~intervaltree.IntervalTree`
+    :param region: :class:`~GenomicRegion` used for overlap calculation
+    :param default_weight: Default value with which to fill matrix
+    """
+    sr, start_ix, end_ix = sub_regions(regions, region)
+
+    size = end_ix - start_ix + 1
+    m = np.full((size, size), default_weight, dtype='float64')
+    for i in range(start_ix, end_ix + 1):
+        for j in range(i, end_ix + 1):
+            try:
+                m[i - start_ix, j - start_ix] = edges[i][j]
+                m[j - start_ix, i - start_ix] = edges[i][j]
+            except KeyError:
+                pass
+
+    return m, sr
+
+
 def edges_from_sparse_matrix(file_name, ix_converter=None, sep="\t"):
+    nan_values = 0
+    total_values = 0
+
     with _open(file_name, 'r') as f:
         for line in f:
             if line.startswith("#"):
                 continue
+            total_values += 1
+
             line = line.rstrip()
             fields = line.split(sep)
             if ix_converter is None:
-                source, sink, weight = (
-                    int(fields[0]), int(fields[1]), float(fields[2]))
+                source, sink, weight = int(fields[0]), int(fields[1]), float(fields[2])
             else:
                 source = ix_converter[fields[0]]
                 sink = ix_converter[fields[1]]
                 weight = float(fields[2])
+
+            if not np.isfinite(weight):
+                nan_values += 1
+                continue
 
             if source <= sink:
                 yield source, sink, weight
             else:
                 yield sink, source, weight
 
+    if nan_values/total_values > 0.05:
+        logger.warning("Could not import more than 5% of matrix entries ({}/{}), "
+                       "as they were not finite".format(nan_values, total_values))
+
+
+def edges_dict(edges):
+    edges_d = defaultdict(dict)
+    for source, sink, weight in edges:
+        edges_d[source][sink] = weight
+    return edges_d
+
 
 def load_sparse_matrix(file_name, ix_converter=None, sep="\t"):
     return list(edges_from_sparse_matrix(file_name, ix_converter, sep))
 
 
-def load_matrix(file_name, size=None, sep=None, ix_converter=None):
+def load_matrix(file_name, size=None, sep=None, ix_converter=None, is_oe=False):
     """Load Numpy matrix from Hi-C matrix file in sparse format.
 
     :param file_name: Path to Hi-C matrix file in sparse format.
@@ -287,7 +365,11 @@ def load_matrix(file_name, size=None, sep=None, ix_converter=None):
     if size is None:
         raise ValueError("Must provide matrix size!")
 
-    m = np.zeros((size, size))
+    if is_oe:
+        m = np.ones((size, size))
+    else:
+        m = np.zeros((size, size))
+
     for source, sink, weight in edges_from_sparse_matrix(
                                 file_name, ix_converter=ix_converter, sep=sep):
         m[source, sink] = weight
@@ -297,6 +379,25 @@ def load_matrix(file_name, size=None, sep=None, ix_converter=None):
 
 
 def load_pairs(file_name, sep=None):
+    """Load region pairs from bedpe file.
+
+    Read input bedpe file and convert to dict mapping the comparison ID to the
+    reference to query regions.
+    :param file_name: Path to input bedpe file. Expected columns:
+        chromosome_reference, start_reference, end_reference,
+        chromosome_query, start_query, end_query,
+        comparison_id, dummy column (not used), strand_reference, strand_query
+    :param sep: Delimiter in bedpe file, defaults to None (splits by tab)
+    :returns: Dict of form {ID: (reference_region, query_region)}, with
+              *region being :class:`GenomicRegion` objects.
+    """
+    pairs = dict()
+    for ID, cref, cqry in load_pairs_iter(file_name, sep=sep):
+        pairs[ID] = (cref, cqry)
+    return pairs
+
+
+def load_pairs_iter(file_name, sep=None):
     """Load region pairs from bedpe file.
 
     Read input bedpe file and convert to dict mapping the comparison ID to the
@@ -331,104 +432,22 @@ def load_pairs(file_name, sep=None):
             cqry = GenomicRegion(
                 chromosome=str(c2), start=int(s2) + 1,
                 end=int(e2), strand=str(str2))
-            pairs[ID] = (cref, cqry)
-    return pairs
+            yield ID, cref, cqry
 
 
-def split_by_chrom(matrix_file, regions, ix2reg, full_matrix_ix_converter=None,
-                   sep=None, sampleID=str(), work_dir='./'):
-    """Split full-genome sparse matrix into seperate chromosome files.
+def chunks(l, p):
+    n = int(np.ceil(len(l)/p))
+    """Yield successive len(l)/p-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
-    Per single-chromosome sparse matrix, write a corresponding regions.bed
-    to the working dir.
-    Store the ix_converter and chromosome size info necessary for
-    loading the file with :func:`load_matrix` and write them
-    to the working dir in combined files for all chromosomes.
-    :param file_name: Path to  Hi-C matrix file in sparse format.
-    :param file_name: Path to regions bed file
-                      corresponding to the sparse matrix.
-    :param ix2reg: ix2reg dictionary corresponding to the regions file
-                   as produced by :func:`load_regions`
-    :param full_matrix_ix_converter: ix_converter dictionary corresponding
-                                     to the regions file, as produced by
-                                     :func:`load_regions`, defaults to None
-    :param sep: Delimiter in matrix file, defaults to None (splits by tab)
-    :param sampleID: ID of the sample, used as a prefix to the names of the
-                     ouput files, defaults to str()
-    :param work_dir: Path to the directory to which the output files
-                     will be written, defaults to './'
-    :returns: Tuple:
-                (
-                    chromosome sizes dict: {chromosome_id: chromosome_size},
-                    ix_converter dict:
-                            {
-                                chromosome_id:
-                                    {region_id: position in chromosome_matrix},
-                            }
-                )
-    """
 
-    # sparse matrices
-    chrom_handles = {}
-    ix_converters = {}
-    chrom_ixs = {}
-    with _open(matrix_file, 'r') as f:
-        for line in f:
-            if line.startswith("#"):
-                continue
-            s_line = line.rstrip()
-            fields = s_line.split(sep)
-            ix1, ix2 = (int(v) for v in fields[:2])
-            if ix1 > ix2:
-                ix1, ix2 = ix2, ix1
-            (c1, s1, e1), (c2, s2, e2) = (ix2reg[int(v)] for v in [ix1, ix2])
-            # allow only intra-chromosomal contacts
-            if c1 != c2:
-                continue
-            if c1 not in chrom_handles:
-                chrom_handles[c1] = open(os.path.join(
-                    work_dir, '{}_{}.sparse'.format(sampleID, c1)), 'w')
-                chrom_ixs[c1] = set()
-            chrom_handles[c1].write(line)
-            chrom_ixs[c1].update([ix1, ix2])
-
-    # region.bed files
+def read_chromosome_sizes(file_name):
     chrom_sizes = {}
-    chrom_regions = {}
-    for region in regions:
-        if region.chromosome not in chrom_regions:
-            if region.chromosome in chrom_handles:
-                chrom_handles[region.chromosome].close()
-            chrom_regions[region.chromosome] = [region, region]
-            continue
-        cs, ce = chrom_regions[region.chromosome]
-        if region.ix < cs.ix:
-            chrom_regions[region.chromosome][0] = region
-        if region.ix > ce.ix:
-            chrom_regions[region.chromosome][1] = region
-
-    for chrom, (cs, ce) in chrom_regions.items():
-        size = ce.ix - cs.ix + 1
-        # map ixs to split matrix size
-        if full_matrix_ix_converter is not None:
-            rev_full_m_ix = {v: k for k, v in full_matrix_ix_converter.items()}
-            cix_s, cix_e = [int(rev_full_m_ix[e]) for e in (cs.ix, ce.ix)]
-        else:
-            cix_s, cix_e = cs.ix, ce.ix
-        ix_converters[chrom] = {
-            str(k): v
-            for k, v in zip(
-                range(cix_s, cix_e + 1),
-                range(size))}
-        chrom_sizes[chrom] = size
-
-        with open(
-            os.path.join(
-                work_dir, '{}_{}.regions.bed'.format(
-                    sampleID, chrom)), 'w') as f:
-            for ix, cix in ix_converters[chrom].items():
-                line = '\t'.join(
-                    [str(e) for e in ix2reg[int(ix)]] + [str(cix)])
-                f.write(line + '\n')
-
-    return chrom_sizes, ix_converters
+    with open(os.path.expanduser(file_name), 'r') as chrom_sizes_file:
+        for line in chrom_sizes_file:
+            line = line.rstrip()
+            if line != '':
+                chromosome, chromosome_length = line.split("\t")
+                chrom_sizes[chromosome] = int(chromosome_length)
+    return chrom_sizes
