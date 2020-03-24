@@ -59,9 +59,9 @@ Use `chess -h` for quick help and orientation.
 
 ### Finding changing regions between biological conditions in the same species
 
-This will run a comparison of 250 kb submatrices of chromosome X in wildtype _Drosophila melanogaster_ to a _zld_ knockdown.
-The output directory is set to `examples/Dmel_genome_scan` and should, after the successful run, contain a comparison_results.tsv file with the raw similarity scores that can be used to rank the regions according to their similarity.
-(Hi-C data from Hug et al. 2017)
+The following will run a comparison of 250 kb submatrices of chromosome X in wildtype 
+_Drosophila melanogaster_ to a _zld_ knockdown (Hi-C data from Hug et al. 2017):
+
 ```bash
 chess sim \
 examples/Dmel_genome_scan/zld_X.sparse.gz \
@@ -69,17 +69,30 @@ examples/Dmel_genome_scan/zld_X.regions.gz \
 examples/Dmel_genome_scan/wt_X.sparse.gz \
 examples/Dmel_genome_scan/wt_X.regions.gz \
 examples/Dmel_genome_scan/Dmel_zld_kd_wt_nc14_chrm_X_250kwindow_25kbstep.pairs.gz \
-examples/Dmel_genome_scan/comparison_results.tsv \
---set-wd examples/Dmel_genome_scan --genome-scan
+examples/Dmel_genome_scan/comparison_results.tsv
 ```
-> NOTE: This example run should finish within 2 minutes on a single core. However, to speed it up, you can use the `-p <int>` flag to specify the number of cores to use (default: 1) and split the workload.
 
+> NOTE: This example run should finish within 2 minutes on a single core. 
+> However, to speed it up, you can use the `-p <int>` flag to specify the 
+> number of cores to use (default: 1) and split the workload.
 
-### Comparing regions accross species
+The output file `examples/Dmel_genome_scan/comparison_results.tsv` 
+contains four columns:
 
-This will run a comparison of 4 regions of varying sizes located on chromosome 19 in mouse and on chromosome 10 in human.
-The output directory is set to `examples/Mmus_Hsap_syntenic` and should, after the successful run, contain a comparison_results.tsv file with the raw similarity scores along with p-values and z-scores which can be used to rank the regions according to their similarity.
-(Hi-C data from Rao et al. 2014)
+- ID: the ID of the original pair, as in the supplied region pairs file
+- SN: the signal-to-noise ratio of the matrices in the comparison, 
+  which can be used for filtering
+- ssim: The raw similarity score, useful to rank matrices by similarity
+- z_ssim: the similarity z-score, in the context of all calculated similarity
+  scores. Useful to assess if the similarity score is exceptionally high or low
+  compared to other scores in the same run. For z-scores in the context of a 
+  proper background model, see below!
+
+### Comparing regions across species
+
+The following will run a comparison of 4 regions of varying sizes located on chromosome 
+19 in mouse and on chromosome 10 in human (Hi-C data from Rao et al. 2014):
+
 ```bash
 chess sim \
 examples/Mmus_Hsap_syntenic/rao2014_hg19_chr10_25kb.sparse.gz \
@@ -87,43 +100,67 @@ examples/Mmus_Hsap_syntenic/rao2014_hg19_chr10_25kb.regions.gz \
 examples/Mmus_Hsap_syntenic/rao2014_mm10_chr19_25kb.sparse.gz \
 examples/Mmus_Hsap_syntenic/rao2014_mm10_chr19_25kb.regions.gz \
 examples/Mmus_Hsap_syntenic/hg19_mm10_syntenic_examples.pairs.gz \
-examples/Mmus_Hsap_syntenic/comparison_results.tsv \
---set-wd examples/Mmus_Hsap_syntenic
+examples/Mmus_Hsap_syntenic/comparison_results.tsv --background-query
 ```
+
+Note the `--background-query`, which enables the query-genome based background 
+model.
+The output file `examples/Mmus_Hsap_syntenic/comparison_results.tsv` has six columns:
+
+* ID: the ID of the original pair, as in the supplied region pairs file
+* SN: the signal-to-noise ratio of the matrices in the comparison, 
+  which can be used for filtering
+* ssim: The raw similarity score, useful to rank matrices by similarity
+* z_ssim: the similarity z-score, in the context of all calculated similarity
+  scores. Useful to assess if the similarity score is exceptionally high or low
+  compared to other scores in the same run.
+* z_bg: the similarity z-score based on the background matrix comparisons.
+* p_bg: The similarity score p-value. This assesses how likely it is to obtain 
+  a similarity of ssim or higher given the comparisons in the background model
+  - in this case, all other regions in the query genome of the same window size
+
+
 
 ## Usage
 
-CHESS has three basic commands: `sim`, which wraps the matrix comparison features and `oe`, which you can use to transform normalized Hi-C matrices into observed / expected matrices and `pairs` which helps you generate the pairs input file for comparing Hi-C data mapped to the same genome between biological conditions.
-
+CHESS has five basic commands: 
+* `sim` contains the matrix comparison features 
+* `oe` can be used to transform normalized Hi-C matrices into 
+  observed / expected matrices 
+* `pairs` helps you generate the pairs input file for comparing 
+  Hi-C data mapped to the same genome between biological conditions
+* `background` can be used to generate simple background model BED files
+* `filter` can be used to filter results obtained by `sim`, for example 
+  by signal-to-noise (SN) ratio
 
 ### sim
 
-The main purpose of CHESS is the assessment of similarity between two Hi-C matrices, one of which is called the 'reference' and the other the 'query'. For this purpose, it has two basic modes:
-  - inter-species comparisons (default)
-  - intra-species comparisons using the `--genome-scan` flag.
+The main purpose of CHESS is the assessment of similarity between two Hi-C matrices, 
+one of which is called the 'reference' and the other the 'query'. The following arguments 
+are mandatory to run `sim`:
 
-The default mode will use the queries whole genome Hi-C to check how the similarity between the reference and query compares to the similarity between the reference and any other region of the same size as the query. Using that information, the comparison between the reference and the query will be assigned a z-score and a p-value which can be used to rank multiple reference - query pairs according to their similarity.
-
-The intra-species mode will only allow comparisons between matrices of equal size and is intended for finding changes in Hi-C data between biological conditions. The ouput will only contain a similarity score. The regions with the lowest scores are the least similar between both conditions, as assessed by CHESS.
-
-CHESS takes the same mandatory, positional arguments for both modes:
-
-* A normalized Hi-C matrix file in sparse matrix format for the reference sample. This should be tab delimited, where each line has three columns:
-      \<row index\> \<column index\> \<value\>)
+* A normalized Hi-C matrix file in sparse matrix format for the reference sample. 
+  This should be tab-delimited, where each line has three columns:
+  \<row index\> \<column index\> \<value\>)
 
 > NOTE: Using CHESS with large matrices at high resolution can require a lot of memory,
-         especially when using many threads. Typically, every thread will load one full
-         chromosome Hi-C map into memory (the number of threads can be controlled with the `-p` flag).
+> especially when using many threads. Typically, every thread will load one full
+> chromosome Hi-C map into memory (the number of threads can be controlled with the `-p` flag).
 
-> NOTE: By default, the input matrices will be converted to observed / expected matrices. In case you already have observed / expected matrices, you can use the `--converted-input` flag to skip the observed / expected conversion.
+> NOTE: By default, the input matrices will be converted to observed / expected matrices. 
+> In case you already have observed / expected matrices, you can use the `--converted-input` 
+> flag to skip the observed / expected conversion. You can pre-compute observed/expected 
+> matrices with `chess oe`
 
 * A BED file with region information for the reference Hi-C matrix.
-  This should be a tab-delimited file where each row contains chromosome name, start, and end coordinates (exclusive) of the region. This file must 
-  not contain any headers. If a fourth column is present, it is assumed to be a unique identifier
-  (index/name), which is then used to refer to that region in sparse matrix format
-  (see above).
+  This should be a tab-delimited file where each row contains chromosome name, start, 
+  and end coordinates (exclusive) of the region. This file must 
+  not contain any headers. If a fourth column is present, it is assumed to be a unique 
+  identifier (index/name), which is then used to refer to that region in sparse matrix 
+  format (see above).
 
-> NOTE: The required formats for the Hi-C matrix (sparse) and regions (BED) are compatible with the standard output of HiC-Pro (Servant et al. 2015).
+> NOTE: The required formats for the Hi-C matrix (sparse) and regions (BED) are compatible 
+> with the standard output of HiC-Pro (Servant et al. 2015).
 
 * A normalized Hi-C matrix file in sparse matrix format for the query sample.
 
@@ -132,95 +169,92 @@ CHESS takes the same mandatory, positional arguments for both modes:
 * A BEDPE file (pairs) file that specifies which regions in the reference matrix should
   be compared to which regions in the query matrix. This should be a tab-delimited file
   with columns:
-  \<ref chromosome\> \<ref start\> \<ref end\> \<qry chromosome\> \<qry start\> \<qry end\> \<comparison name/id\> \<anything, not used\> \<ref strand\> \<qry strand\>
-  The 8th column is required in order to match the BEDPE standard format (see http://bedtools.readthedocs.io/en/latest/content/general-usage.html).
+  \<ref chromosome\> \<ref start\> \<ref end\> \<qry chromosome\> \<qry start\> 
+  \<qry end\> \<comparison name/id\> \<anything, not used\> \<ref strand\> \<qry strand\>
+  The 8th column is required in order to match the BEDPE standard format 
+  (see http://bedtools.readthedocs.io/en/latest/content/general-usage.html).
   This file must not contain any headers. The end coordinates are exclusive.
 
 * The path to the output file.
 
-When called with only these arguments, CHESS will compare the specified regions between the reference and query matrices, using the query matrix as a background for the computation of p- and z-values. The output will consist of three files:
+The default mode with only the mandatory arguments will compare regions in the reference 
+to the query using the region definitions in the pairs file. The output then contains the 
+following columns:
 
-* OUT, a tab-delimited file with columns: 
-  \<comparison name/ID\> \<p-value\> \<structural similarity score (ssim)\> \<z-score\>
-  The comparison name/ID is the same that is specified in the BEDPE input file.
-  The p-values and z-scores can be used to rank the regions according to their similarity.
-  The raw structural similarity score is sensitive to sizes and size differences between the compared regions and should be handled with care.
+- ID: the ID of the original pair, as in the supplied region pairs file
+- SN: the signal-to-noise ratio of the matrices in the comparison, 
+  which can be used for filtering
+- ssim: The raw similarity score, useful to rank matrices by similarity
+- z_ssim: the similarity z-score, in the context of all calculated similarity
+  scores. Useful to assess if the similarity score is exceptionally high or low
+  compared to other scores in the same run. For z-scores in the context of a 
+  proper background model, see below!
 
-* OUT.FULL_RAW.json, a Python dictionary of format:
-```python
-  {
-      name/ID: {
-        region_1: score,
-        ...,
-        region_n: score
-      }  
-  }
-```
-  This dictionary has an entry for every pair in the input BEDPE that was tested, and contains every region from the background that the reference was compared to and the corresponding structural similarity score.
+#### Background models
 
-* OUT.FULL_ROUNDED_QUERIES.json, a Python dictionary of format:
-```python
-  {
-      name/ID: region
-  }
-```
-  This dictionary contains the rounded positions of the input queries that were used in the actual comparisons. The specified start, end positions usually have to be rounded to the nearest bin.
-  These positions can be used to discriminate the 'true' query region from the rest in the FULL_RAW.json file.
+To assess the statistical significance of your comparisons, you can enable a *background model*.
 
-You can read the .json output in python using the json package:
+For inter-species comparisons, for example, it is useful to compare the original similarity 
+score to the similarities obtained  by comparing the reference matrix to all other matrices in the
+query. To enable this background model, use the `--background-query` parameter.
 
-```python
-import json
-with open('path_to_json_file', 'r') as f:
-  my_dict = json.load(f)
-```
+For a custom background model, you can include your own BED file with background regions using
+`--background-regions`. You can generate these from a genome, for example, using `chess background`.
+
+With an active background model, there are more columns in the output:
+
+* ID: the ID of the original pair, as in the supplied region pairs file
+* SN: the signal-to-noise ratio of the matrices in the comparison, 
+  which can be used for filtering
+* ssim: The raw similarity score, useful to rank matrices by similarity
+* z_ssim: the similarity z-score, in the context of all calculated similarity
+  scores. Useful to assess if the similarity score is exceptionally high or low
+  compared to other scores in the same run.
+* z_bg: the similarity z-score based on the background matrix comparisons.
+* p_bg: The similarity score p-value. This assesses how likely it is to obtain 
+  a similarity of ssim or higher given the comparisons in the background model
+  - in this case, all other regions in the query genome of the same window size
 
 
-When the -genome_scan flag is set, OUT will be the only output file, as no background calculation is done in that case. OUT will then have the following format:
-\<comparison name/ID\> \<signal to noise score (SN)\> \<structural similarity score (ssim)\>, where SN can be used to filter out very noise pairs with low SN values.
+#### Optional arguments
 
 Optional arguments give you more control:
 
-* `--reference_ID <string>` Species / Sample identifier for the reference Hi-C data. Will be used as a prefix for the intermediate file names corresponding to the reference Hi-C. Default: REF
-
-* `--query_ID <string>` Species / Sample identifier for the query Hi-C data. Will be used as a prefix for the intermediate file names corresponding to the query Hi-C. Default: QRY
-
-* `-d`, `--set-wd <string>` lets you set the working directory of CHESS. All intermediate files will be written to this directory (default: './'.
-
-* `--no-clean` lets you keep all intermediate files (split chromosome files, helpers and full input matrices converted to observed / expected matrices).
-
-* `--fast-input` lets you use intermediate files generated in previous runs located in the working directory. Reduces the runtime, as the input sparse matrix won't have to be split.
-
-* `--genome-scan` will run without any background comparisons and report only the raw ssim scores for the pairs defined in the pairs file. All regions in the pairs file are expected to be of similar size to ensure comparability of the scores. Use this if you want to find differences between two Hi-C datasets mapped to the same genome.
-
-* `--limit-background` reduces the computation of the background score distribution to the chromosome the query region (defined in the pairs file) is located on. Reduces runtime. However, it is in general advisable to use the whole genome as a background. Otherwise, some bias might be introduced due to differing chromosome sizes.
-
-* `--converted-input` will skip the observed / expected conversion of the input matrices. Use if you already have observed / expected matrices or want to compare matrices in different format.
-
-* `--no-raw` will only write only the standard OUT file. Set if you have no use for the OUT.FULL_RAW.json and OUT.FULL_ROUNDED_QUERIES.json files.
+* `--converted-input` will skip the observed / expected conversion of the input matrices. 
+  Use if you already have observed / expected matrices or want to compare matrices in different format.
 
 * `-p <int>` lets you choose the number of cores that CHESS will use (default: 1).
 
-* `--keep-unmappable-bins` disables the deletion of deletion of unmappable bins from matrices before comparison. By default, bins that are marked as unmappable (have not contacts) in either of two matrices in a comparison are deleted from both matrices. Disabling this might give high similarity scores for matrices that happen to have unmappable bins at the same positions.
+* `--keep-unmappable-bins` disables the deletion of deletion of unmappable bins from matrices 
+  before comparison. By default, bins that are marked as unmappable (have not contacts) 
+  in either of two matrices in a comparison are deleted from both matrices. Disabling this 
+  might give high similarity scores for matrices that happen to have unmappable bins at the 
+  same positions.
 
-* `--mappability-cutoff <float>` maximum allowed content of unmappable bins in a matrix. In case a matrix has more unmappable bins, it will not be compared. (default: 0.1)
+* `--mappability-cutoff <float>` maximum allowed content of unmappable bins in a matrix. 
+  In case a matrix has more unmappable bins, it will not be compared. (default: 0.1)
 
-* `-r <float>, --relative-windowsize <float>` Fraction of the matrix size that will be used for the window size parameter of the structural similarity function. (default: 1)
+* `-r <float>, --relative-windowsize <float>` Fraction of the matrix size that will be used 
+  for the window size parameter of the structural similarity function. (default: 1)
 
-* `-a <float>, --absolute-windowsize <float>` Absolute value for the window size parameter of the structural similarity function. Overwrites `-r`.
+* `-a <float>, --absolute-windowsize <float>` Absolute value for the window size parameter 
+  of the structural similarity function. Overwrites `-r`.
 
 
 ### oe
 
-`chess oe` lets you convert your input matrix to observed / expected format. Calling `chess sim` this is done autmatically, but if you want to convert your matrix for other reasons, you can use this.
+`chess oe` lets you convert your input matrix to observed / expected format. 
+ Calling `chess sim` this is done automatically, but if you want to convert 
+ your matrix for other reasons, you can use this.
 
 `oe` takes three positional arguments (in that order):
 
-* A Hi-C matrix file in sparse matrix format. This should be tab delimited, where each line has three columns:
-      \<row index\> \<column index\> \<value\>)
+* A Hi-C matrix file in sparse matrix format. This should be tab delimited, 
+  where each line has three columns: \<row index\> \<column index\> \<value\>)
 
 * A BED file with region information for the Hi-C matrix.
-  This should be a tab-delimited file where each row contains chromosome name, start, and end coordinates (exclusive) of the region. This file must 
+  This should be a tab-delimited file where each row contains chromosome name, 
+  start, and end coordinates (exclusive) of the region. This file must 
   not contain any headers. If a fourth column is present, it is assumed to be a unique identifier
   (index/name), which is then used to refer to that region in sparse matrix format
   (see above).
@@ -230,11 +264,18 @@ Optional arguments give you more control:
 
 ### pairs
 
-`chess pairs` helps you generate the pairs input file to `chess sim ... --genome-scan`. There is no need to use this function for generating the pairs file, it is just here to make your life easier. `chess pairs` will perform a window slide with the specified input parameters. All positions of the window will be written to the specified output file in the format required by `chess sim`.
+`chess pairs` helps you generate the pairs input file to `chess sim`. There is no need 
+to use this function for generating the pairs file, it is just here to make your life 
+easier. `chess pairs` will perform a window slide with the specified input parameters. 
+All positions of the window will be written to the specified output file in the format 
+required by `chess sim`.
 
 `pairs` takes four positional arguments (in that order):
 
-* A genome id as recognized by pybedtools (see [here](https://daler.github.io/pybedtools/autodocs/pybedtools.helpers.chromsizes.html)) or a path to a tab-delimited file indicating the chromosome names and sizes of your genome (no header, two columns: \<chromosome name\> \<chromosome size\>).
+* A genome id as recognized by pybedtools 
+ (see [here](https://daler.github.io/pybedtools/autodocs/pybedtools.helpers.chromsizes.html)) 
+  or a path to a tab-delimited file indicating the chromosome names and sizes of your genome 
+  (no header, two columns: \<chromosome name\> \<chromosome size\>).
 
 * The size of the window.
 
@@ -244,14 +285,21 @@ Optional arguments give you more control:
 
 You can use the following optional arguments to tweak `chess pairs`' behaviour:
 
-* `--file-input` will force `pairs` to read from file. Won't attempt to use pybedtools in that case, which is by default tried first. You can use this if you gave your chromosome.sizes file a name that is also used as a UCSC identifier.
+* `--file-input` will force `pairs` to read from file. Won't attempt to use pybedtools 
+  in that case, which is by default tried first. You can use this if you gave your 
+  chromosome.sizes file a name that is also used as a UCSC identifier.
 
-* `--chromosome` lets you restrict the pair generation to a specific chromosome, in case you don't want all of them.
+* `--chromosome` lets you restrict the pair generation to a specific chromosome, in 
+  case you don't want all of them.
 
 
 ### filter
 
-`chess filter` helps you filter the results file that is generated by `chess sim` and converts it to BED format, where the name (4th) column contains the comparison pair IDs. It outputs one BED file per reference and query, unless you run it on results generated in a `chess sim ... --genome-scan` run. You can then use `chess filter ... --genome-scan` to create a single BED file.
+`chess filter` helps you filter the results file that is generated by `chess sim` 
+and converts it to BED format, where the name (4th) column contains the comparison 
+pair IDs. It outputs one BED file per reference and query, unless you run it on 
+results generated in a `chess sim ... --genome-scan` run. You can then use 
+`chess filter ... --genome-scan` to create a single BED file.
 
 `filter` takes three positional arguments (in that order):
 
@@ -261,7 +309,11 @@ You can use the following optional arguments to tweak `chess pairs`' behaviour:
 
 * The path to the output file. (REF and QUERY or genome_scan will be appended to that filename)
 
-You can use the following parameters to specify how to filter the results. `mode` has to be `geq` (greated equal), `leq` (less equal), `l` (less) or `g` (greater). `value` defines the threshold value for the filter. You can combine any number of filters, as long as the corresponding columns are present in the results file. If you do not specify any filters, the results will simply be converted to BED format.
+You can use the following parameters to specify how to filter the results. `mode` has to 
+be `geq` (greated equal), `leq` (less equal), `l` (less) or `g` (greater). `value` 
+defines the threshold value for the filter. You can combine any number of filters, 
+as long as the corresponding columns are present in the results file. If you do not 
+specify any filters, the results will simply be converted to BED format.
 
 * `-p mode value`: filter by p-value (p column)
 
