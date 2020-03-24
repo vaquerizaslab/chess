@@ -202,9 +202,9 @@ class Chess(object):
         from chess.helpers import load_pairs_iter, load_regions, \
             region_interval_trees, GenomicRegion, \
             edges_dict, edges_from_sparse_matrix, chunks
-        from chess.sim import compare_structures
+        from chess.sim import chunk_comparison_worker
         from chess.oe import observed_expected
-        from multiprocessing.pool import ThreadPool as Pool
+        import multiprocessing as mp
         import numpy as np
         from collections import defaultdict
 
@@ -246,168 +246,172 @@ class Chess(object):
         logger.info('[MAIN]: Loading region pairs')
         pairs = list(load_pairs_iter(pairs_file))
 
-        pool = Pool(processes=threads)
-        results = []
-        for worker_id, chunk in enumerate(chunks(pairs, threads)):
-            arguments = (reference_edges, reference_region_trees,
-                         query_edges, query_region_trees,
-                         chunk, worker_id, 20,
-                         args.keep_unmappable_bins, args.absolute_windowsize,
-                         args.relative_windowsize, args.mappability_cutoff)
+        logger.info("Launching workers")
+        m = mp.Manager()
+        input_queue = m.Queue()
+        output_queue = m.Queue()
 
-            res = pool.apply_async(compare_structures, arguments)
+        pool = None
+        try:
+            pool = mp.Pool(threads, chunk_comparison_worker,
+                           (input_queue, output_queue,
+                            reference_edges, reference_region_trees,
+                            query_edges, query_region_trees,
+                            20, args.keep_unmappable_bins, args.absolute_windowsize,
+                            args.relative_windowsize, args.mappability_cutoff))
 
-            results.append(res)
+            logger.info("Submitting pairs for comparison")
+            submitted_counter = 0
+            for chunk in chunks(pairs, threads):
+                input_queue.put(chunk)
+                submitted_counter += 1
 
-        logger.info('[MAIN]: Collecting results')
-        pool.close()
-        pool.join()
+            ssim_results = dict()
+            all_ssim = []
+            for i in range(submitted_counter):
+                out = output_queue.get(block=True)
+                if isinstance(out, Exception):
+                    raise out
+                for pair_ix, ssim, sn in out:
+                #pair_ix, ssim, sn = out
+                    ssim_results[pair_ix] = [ssim, sn, np.nan]
+                    if not np.isnan(ssim):
+                        all_ssim.append(ssim)
 
-        ssim_results = dict()
-        all_ssim = []
-        for res in results:
-            worker_results = res.get()
-            for pair_id, (ssim, sn) in worker_results.items():
-                ssim_results[pair_id] = [ssim, sn, np.nan]
-                if not np.isnan(ssim):
-                    all_ssim.append(ssim)
+            # calculate ssim z-score
+            all_ssim_mean = np.nanmean(all_ssim)
+            all_ssim_sd = np.nanstd(all_ssim)
+            for pair_id in list(ssim_results.keys()):
+                ssim, sn, z = ssim_results[pair_id]
+                if np.isfinite(ssim):
+                    ssim_results[pair_id][2] = (ssim - all_ssim_mean) / all_ssim_sd
 
-        # calculate ssim z-score
-        all_ssim_mean = np.nanmean(all_ssim)
-        all_ssim_sd = np.nanstd(all_ssim)
-        for pair_id in list(ssim_results.keys()):
-            ssim, sn, z = ssim_results[pair_id]
-            if np.isfinite(ssim):
-                ssim_results[pair_id][2] = (ssim - all_ssim_mean) / all_ssim_sd
+            # no background calculations
+            if background_regions_file is None and not background_query:
+                nan_counter = 0
+                with open(output_file, 'w') as o:
+                    o.write("ID\tSN\tssim\tz_ssim\n")
+                    for pair_id, _, _ in pairs:
+                        if pair_id in ssim_results:
+                            ssim, sn, z_ssim = ssim_results[pair_id]
+                        else:
+                            ssim, sn, z_ssim = np.nan, np.nan, np.nan
 
-        # no background calculations
-        if background_regions_file is None and not background_query:
-            nan_counter = 0
-            with open(output_file, 'w') as o:
-                o.write("ID\tSN\tssim\tz_ssim\n")
-                for pair_id, _, _ in pairs:
-                    if pair_id in ssim_results:
-                        ssim, sn, z_ssim = ssim_results[pair_id]
-                    else:
-                        ssim, sn, z_ssim = np.nan, np.nan, np.nan
+                        if np.isnan(ssim):
+                            nan_counter += 1
 
-                    if np.isnan(ssim):
-                        nan_counter += 1
+                        o.write("{}\t{}\t{}\t{}\n".format(pair_id, sn, ssim, z_ssim))
 
-                    o.write("{}\t{}\t{}\t{}\n".format(pair_id, sn, ssim, z_ssim))
+                if nan_counter > 0:
+                    logger.info("Could not compute similarity for {} region pairs. "
+                                "This typically happens if the region size is too small "
+                                "(< 20 bins of the matrix)".format(nan_counter))
 
-            if nan_counter > 0:
-                logger.info("Could not compute similarity for {} region pairs. "
-                            "This typically happens if the region size is too small "
-                            "(< 20 bins of the matrix)".format(nan_counter))
-
-        # background calculations
-        else:
-            logger.info("[MAIN]: Running background calculations")
-            if background_regions_file is not None:
-                background_regions_file = os.path.expanduser(background_regions_file)
-                background_regions, _, _ = load_regions(background_regions_file, ignore_ix=True)
+            # background calculations
             else:
-                background_regions = None
-                logger.info("Generating background regions from query")
+                logger.info("[MAIN]: Running background calculations")
+                if background_regions_file is not None:
+                    background_regions_file = os.path.expanduser(background_regions_file)
+                    background_regions, _, _ = load_regions(background_regions_file, ignore_ix=True)
+                else:
+                    background_regions = None
+                    logger.info("Generating background regions from query")
 
-            # process each reference region separately
-            ssim_zscores = dict()
-            ssim_pvalues = dict()
-            for pair_id, reference_region, query_region in progressbar(pairs):
-                if background_query:
-                    chromosome_ends = defaultdict(int)
-                    for r in query_regions:
-                        chromosome_ends[r.chromosome] = max(chromosome_ends[r.chromosome], r.end)
+                # process each reference region separately
+                ssim_zscores = dict()
+                ssim_pvalues = dict()
+                for pair_id, reference_region, query_region in progressbar(pairs):
+                    if background_query:
+                        chromosome_ends = defaultdict(int)
+                        for r in query_regions:
+                            chromosome_ends[r.chromosome] = max(chromosome_ends[r.chromosome], r.end)
 
-                    background_regions = []
-                    query_size = query_region.end - query_region.start
-                    # generate background regions from query genome
-                    for region in query_regions:
-                        if limit_background and region.chromosome != query_region.chromosome:
-                            continue
+                        background_regions = []
+                        query_size = query_region.end - query_region.start
+                        # generate background regions from query genome
+                        for region in query_regions:
+                            if limit_background and region.chromosome != query_region.chromosome:
+                                continue
 
-                        # forward
-                        br1 = GenomicRegion(chromosome=region.chromosome,
-                                            start=region.start,
-                                            end=region.start + query_size,
-                                            strand='+')
-                        if br1.end <= chromosome_ends[br1.chromosome]:
-                            background_regions.append(br1)
+                            # forward
+                            br1 = GenomicRegion(chromosome=region.chromosome,
+                                                start=region.start,
+                                                end=region.start + query_size,
+                                                strand='+')
+                            if br1.end <= chromosome_ends[br1.chromosome]:
+                                background_regions.append(br1)
 
-                        # reverse
-                        br2 = GenomicRegion(chromosome=region.chromosome,
-                                            start=region.start,
-                                            end=region.start + query_size,
-                                            strand='-')
-                        if br2.end <= chromosome_ends[br2.chromosome]:
-                            background_regions.append(br2)
+                            # reverse
+                            br2 = GenomicRegion(chromosome=region.chromosome,
+                                                start=region.start,
+                                                end=region.start + query_size,
+                                                strand='-')
+                            if br2.end <= chromosome_ends[br2.chromosome]:
+                                background_regions.append(br2)
 
-                background_pairs = []
-                for bg_id, background_region in enumerate(background_regions):
-                    background_pairs.append((bg_id, reference_region, background_region))
+                    background_pairs = []
+                    for bg_id, background_region in enumerate(background_regions):
+                        background_pairs.append((bg_id, reference_region, background_region))
 
-                pool = Pool(processes=threads)
-                results = []
-                for worker_id, chunk in enumerate(chunks(background_pairs, threads)):
-                    arguments = (reference_edges, reference_region_trees,
-                                 query_edges, query_region_trees,
-                                 chunk, worker_id, 20,
-                                 args.keep_unmappable_bins, args.absolute_windowsize,
-                                 args.relative_windowsize, args.mappability_cutoff)
+                    submitted_counter = 0
+                    for chunk in chunks(background_pairs, threads):
+                        input_queue.put(chunk)
+                        submitted_counter += 1
 
-                    res = pool.apply_async(compare_structures, arguments)
+                    background_ssim_results = []
+                    background_sn_results = []
+                    for i in range(submitted_counter):
+                        out = output_queue.get(block=True)
+                        if isinstance(out, Exception):
+                            raise out
+                        for pair_ix, ssim, sn in out:
+                            #pair_ix, ssim, sn = out
+                            background_ssim_results.append(ssim)
+                            background_sn_results.append(sn)
 
-                    results.append(res)
+                    try:
+                        original_ssim, _, _ = ssim_results[pair_id]
+                        if np.isnan(original_ssim):
+                            ssim_zscores[pair_id] = np.nan
+                            ssim_pvalues[pair_id] = np.nan
+                        else:
+                            ssim_mean = np.nanmean(background_ssim_results)
+                            ssim_sd = np.nanstd(background_ssim_results)
 
-                logger.debug('[MAIN]: Collecting background calculation results')
-                pool.close()
-                pool.join()
-
-                background_ssim_results = []
-                background_sn_results = []
-                for res in results:
-                    worker_results = res.get()
-                    for bg_id, (ssim, sn) in worker_results.items():
-                        background_ssim_results.append(ssim)
-                        background_sn_results.append(sn)
-                try:
-                    original_ssim, _, _ = ssim_results[pair_id]
-                    if np.isnan(original_ssim):
+                            z = (original_ssim - ssim_mean) / ssim_sd
+                            p = (1 + np.sum(original_ssim <= background_ssim_results)) / len(background_ssim_results)
+                            ssim_zscores[pair_id] = z
+                            ssim_pvalues[pair_id] = p
+                    except KeyError:
                         ssim_zscores[pair_id] = np.nan
                         ssim_pvalues[pair_id] = np.nan
-                    else:
-                        ssim_mean = np.nanmean(background_ssim_results)
-                        ssim_sd = np.nanstd(background_ssim_results)
 
-                        z = (original_ssim - ssim_mean) / ssim_sd
-                        p = (1 + np.sum(original_ssim <= background_ssim_results)) / len(background_ssim_results)
-                        ssim_zscores[pair_id] = z
-                        ssim_pvalues[pair_id] = p
-                except KeyError:
-                    ssim_zscores[pair_id] = np.nan
-                    ssim_pvalues[pair_id] = np.nan
+                nan_counter = 0
+                with open(output_file, 'w') as o:
+                    o.write("ID\tSN\tssim\tz_ssim\tz_bg\tp_bg\n")
+                    for pair_id, _, _ in pairs:
+                        if pair_id in ssim_results:
+                            ssim, sn, z_ssim = ssim_results[pair_id]
+                            z = ssim_zscores[pair_id]
+                            p = ssim_pvalues[pair_id]
+                        else:
+                            ssim, sn, z_ssim, z, p = np.nan, np.nan, np.nan, np.nan, np.nan
 
-            nan_counter = 0
-            with open(output_file, 'w') as o:
-                o.write("ID\tSN\tssim\tz_ssim\tz_bg\tp_bg\n")
-                for pair_id, _, _ in pairs:
-                    if pair_id in ssim_results:
-                        ssim, sn, z_ssim = ssim_results[pair_id]
-                        z = ssim_zscores[pair_id]
-                        p = ssim_pvalues[pair_id]
-                    else:
-                        ssim, sn, z_ssim, z, p = np.nan, np.nan, np.nan, np.nan, np.nan
+                        if np.isnan(ssim):
+                            nan_counter += 1
 
-                    if np.isnan(ssim):
-                        nan_counter += 1
+                        o.write("{}\t{}\t{}\t{}\t{}\t{}\n".format(pair_id, sn, ssim, z_ssim, z, p))
 
-                    o.write("{}\t{}\t{}\t{}\t{}\t{}\n".format(pair_id, sn, ssim, z_ssim, z, p))
+                if nan_counter > 0:
+                    logger.info("Could not compute similarity for {}/{} region pairs. "
+                                "This typically happens if the region size is too small "
+                                "(< 20 bins of the matrix)".format(nan_counter, len(pairs)))
+        finally:
+            for i in range(threads):
+                input_queue.put(None)
 
-            if nan_counter > 0:
-                logger.info("Could not compute similarity for {}/{} region pairs. "
-                            "This typically happens if the region size is too small "
-                            "(< 20 bins of the matrix)".format(nan_counter, len(pairs)))
+            if pool is not None:
+                pool.terminate()
 
     def oe(self, argv):
         parser = MyParser(
