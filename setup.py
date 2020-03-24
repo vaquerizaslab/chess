@@ -42,6 +42,7 @@ setup(
         'intervaltree',
         'pybedtools',
         'tqdm',
+        'kneed',
     ],
     scripts=['bin/chess'],
     cmdclass={
