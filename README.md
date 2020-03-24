@@ -123,7 +123,7 @@ The output file `examples/Mmus_Hsap_syntenic/comparison_results.tsv` has six col
 
 ## Usage
 
-CHESS has five basic commands: 
+CHESS has these basic commands: 
 * `sim` contains the matrix comparison features 
 * `oe` can be used to transform normalized Hi-C matrices into 
   observed / expected matrices 
@@ -132,6 +132,11 @@ CHESS has five basic commands:
 * `background` can be used to generate simple background model BED files
 * `filter` can be used to filter results obtained by `sim`, for example 
   by signal-to-noise (SN) ratio
+* `extract` allows you to the specific features from significant different 
+  regions identified by `chess sim`
+* `crosscorrelate` allows to classify the extracted features by `extract` 
+  in order to obtain the main structural clusters.
+
 
 ### sim
 
