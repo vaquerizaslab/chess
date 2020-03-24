@@ -100,6 +100,9 @@ def expected_values(regions, sparse_matrix, selected_chromosome=None):
     inter_sums = 0.0
     intra_sums = [0.0] * max_distance
     for source, sink, weight in sparse_matrix:
+        if not np.isfinite(weight):
+            continue
+
         source_chromosome = chromosome_dict[source]
         sink_chromosome = chromosome_dict[sink]
 
@@ -143,7 +146,7 @@ def expected_values(regions, sparse_matrix, selected_chromosome=None):
     return intra_expected, chromosome_intra_expected, inter_expected
 
 
-def _oe_generator(sparse_matrix, ix_to_chromosome, intra_expected, inter_expected):
+def _oe_generator(sparse_matrix, ix_to_chromosome, intra_expected, inter_expected, log=False):
     for source, sink, weight in sparse_matrix:
         source_chromosome = ix_to_chromosome[source]
         sink_chromosome = ix_to_chromosome[sink]
@@ -151,7 +154,16 @@ def _oe_generator(sparse_matrix, ix_to_chromosome, intra_expected, inter_expecte
             e = intra_expected[source_chromosome][sink - source]
         else:
             e = inter_expected
-        yield source, sink, weight/e
+
+        try:
+            oe = weight/e
+        except ZeroDivisionError:
+            oe = 1
+
+        if log:
+            yield source, sink, np.log2(oe)
+
+        yield source, sink, oe
 
 
 def observed_expected(regions, sparse_matrix):
