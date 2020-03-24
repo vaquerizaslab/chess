@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 
-import os
 import logging
 import numpy as np
-from math import ceil
-from scipy.stats import zscore
+
 from skimage.transform import resize
 from skimage.metrics import structural_similarity
 from numpy.lib.stride_tricks import as_strided
-from .helpers import load_matrix, load_regions, \
-    sub_matrix_regions, GenomicRegion, \
-    sub_matrix_from_edges_dict
+from .helpers import sub_matrix_from_edges_dict
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +104,188 @@ def remove_rows(m, target_rows):
     return m_removed
 
 
+def comparison_worker(input_queue, output_queue,
+                      reference_edges, reference_regions,
+                      query_edges, query_regions,
+                      min_bins=20,
+                      keep_unmappable_bins=False,
+                      absolute_window_size=None,
+                      relative_window_size=1.,
+                      mappability_cutoff=0.1,
+                      default_value=1):
+    worker_id = uuid.uuid4()
+    try:
+        while True:
+            pair = input_queue.get(block=True)
+            if pair is None:
+                break
+
+            pair_ix, ssim, sn = compare_pair(pair,
+                                             reference_edges, reference_regions,
+                                             query_edges, query_regions,
+                                             min_bins=min_bins,
+                                             keep_unmappable_bins=keep_unmappable_bins,
+                                             absolute_window_size=absolute_window_size,
+                                             relative_window_size=relative_window_size,
+                                             mappability_cutoff=mappability_cutoff,
+                                             default_value=default_value)
+            output_queue.put((pair_ix, ssim, sn))
+    except Exception as e:
+        logger.error("Worker {} encountered a problem: {}".format(worker_id, e))
+        output_queue.put(e)
+
+    logger.info("Worker {} exited gracefully".format(worker_id))
+
+
+def chunk_comparison_worker(input_queue, output_queue,
+                            reference_edges, reference_regions,
+                            query_edges, query_regions,
+                            min_bins=20,
+                            keep_unmappable_bins=False,
+                            absolute_window_size=None,
+                            relative_window_size=1.,
+                            mappability_cutoff=0.1,
+                            default_value=1):
+    worker_id = uuid.uuid4()
+    try:
+        while True:
+            chunk = input_queue.get(block=True)
+            if chunk is None:
+                break
+
+            results = []
+            for pair in chunk:
+                pair_ix, ssim, sn = compare_pair(pair,
+                                                 reference_edges, reference_regions,
+                                                 query_edges, query_regions,
+                                                 min_bins=min_bins,
+                                                 keep_unmappable_bins=keep_unmappable_bins,
+                                                 absolute_window_size=absolute_window_size,
+                                                 relative_window_size=relative_window_size,
+                                                 mappability_cutoff=mappability_cutoff,
+                                                 default_value=default_value)
+                results.append([pair_ix, ssim, sn])
+            output_queue.put(results)
+    except Exception as e:
+        logger.error("Worker {} encountered a problem: {}".format(worker_id, e))
+        output_queue.put(e)
+
+    logger.info("Worker {} exited gracefully".format(worker_id))
+
+
+def compare_pair(pair, reference_edges, reference_regions,
+                 query_edges, query_regions,
+                 min_bins=20,
+                 keep_unmappable_bins=False,
+                 absolute_window_size=None,
+                 relative_window_size=1.,
+                 mappability_cutoff=0.1,
+                 default_value=1):
+    """Run comparison of given Hi-C matrices without any background model.
+
+    Compare given submatrices of the full Hi-C matrices in sampleID2hic.
+    All submatrices (specified in pairs) have to be of the same size.
+    The assignment of reference and query samples is arbitrary in this case,
+    but has to be consistent.
+    :param edges: edges dictionary
+    :param regions: regions intervaltree
+
+    :param worker_ID: String or int used as ID for the process in which this
+                      function is run.
+    :param pairs: Dictionary indicating the submatrix pairs that
+                  will be compared.
+                  Must have form:
+                  {
+                    pair_id: (reference_region, query_region)
+                  },
+                  where reference_region and query_region
+                  are :class:`~GenomicRegion` objects.
+    :param min_bins: Minimum size of matrix to be considered for comparison,
+                     defaults to 20
+    :param keep_unmappable_bins: If True, disables removal of unmappable bins
+                                 from matrices prior to comparison,
+                                 defaults to False
+    :param absolute_windowsize: Absolute window size used in the
+                                structural similarity function. Overwrites
+                                relative_windowsize, defaults to None
+    :param relative_windowsize: Window size relative to the size
+                                of the compared matrices,
+                                used in the structural similarity function,
+                                defaults to 1.
+    :param mappability_cutoff: Maximum fraction of unmappable bins allowed
+                               in a matrix to be considered for comparison,
+                               defaults to 0.1
+
+    :returns: results dictionary of form:
+              {
+                pair_id: (similarity_score, signal_to_noise_value)
+              }
+    """
+    pair_ix, reference_region, query_region = pair
+    try:
+        reference, ref_rs = sub_matrix_from_edges_dict(reference_edges, reference_regions,
+                                                       reference_region, default_weight=default_value)
+        query, qry_rs = sub_matrix_from_edges_dict(query_edges, query_regions,
+                                                   query_region, default_weight=default_value)
+    except ValueError:
+        return pair_ix, np.nan, np.nan
+
+    # check size criteria
+    if query.shape[0] < min_bins or reference.shape[0] < min_bins:
+        return pair_ix, np.nan, np.nan
+
+    # resize matrices if needed
+    size_factor = len(reference) / len(query)
+    if size_factor < 1:
+        reference = resize(reference, np.shape(query), order=0,
+                           mode='reflect').astype(np.float64)
+    elif size_factor > 1:
+        query = resize(query, np.shape(reference), order=0,
+                       mode='reflect').astype(np.float64)
+
+    # check if either matrix needs to be flipped
+    if reference_region.strand != query_region.strand:
+        query = np.fliplr(np.flipud(query))
+
+    # check content in unmappable bins in input matrices
+    idxs = []
+    init_filter_pass = True
+    if mappability_cutoff > 0:
+        ms = [reference, query]
+        for m in ms:
+            m = np.array(m)
+            idx = find_masked_rows(m, masking_value=default_value)
+            idxs.append(idx)
+            if len(idx) / np.shape(m)[0] > mappability_cutoff:
+                init_filter_pass = False
+    if not init_filter_pass:
+        return pair_ix, np.nan, np.nan
+
+    # remove masked bins
+    if not keep_unmappable_bins:
+        target_rows = np.union1d(*idxs)
+        reference = remove_rows(reference, target_rows)
+        query = remove_rows(query, target_rows)
+
+    # compare!
+    if absolute_window_size:
+        window_size = absolute_window_size
+    else:
+        window_size = int(np.shape(reference)[0] * relative_window_size)
+    if window_size % 2 == 0:
+        window_size -= 1
+
+    # prevent from going lower than three.
+    # breaks at ws = 1 because of 0 division, and 2 is not odd.
+    window_size = max(window_size, 3)
+
+    # actual comparison
+    curr_ssim = structural_similarity(reference, query, win_size=window_size)
+    curr_sn = SN(reference, query)
+
+    return pair_ix, curr_ssim, curr_sn
+
+
 def compare_structures(reference_edges, reference_regions,
                        query_edges, query_regions,
                        pairs, worker_ID,
@@ -150,9 +329,6 @@ def compare_structures(reference_edges, reference_regions,
     :param mappability_cutoff: Maximum fraction of unmappable bins allowed
                                in a matrix to be considered for comparison,
                                defaults to 0.1
-    :param limit_background: Does not have an effect.
-                             will be removed in future versions.
-                             Defaults to False
     :returns: results dictionary of form:
               {
                 pair_id: (similarity_score, signal_to_noise_value)
@@ -162,75 +338,21 @@ def compare_structures(reference_edges, reference_regions,
     results = {}  # store the ssim in here
     no_pass = set()
 
-    for pair_ix, reference_region, query_region in pairs:
-        try:
-            reference, ref_rs = sub_matrix_from_edges_dict(reference_edges, reference_regions,
-                                                           reference_region, default_weight=default_value)
-            query, qry_rs = sub_matrix_from_edges_dict(query_edges, query_regions,
-                                                       query_region, default_weight=default_value)
-        except ValueError:
+    for pair in pairs:
+        pair_ix, ssim, sn = compare_pair(pair,
+                                         reference_edges, reference_regions,
+                                         query_edges, query_regions,
+                                         min_bins=min_bins,
+                                         keep_unmappable_bins=keep_unmappable_bins,
+                                         absolute_window_size=absolute_window_size,
+                                         relative_window_size=relative_window_size,
+                                         mappability_cutoff=mappability_cutoff,
+                                         default_value=default_value)
+        if np.isnan(ssim):
             no_pass.add(pair_ix)
             results[pair_ix] = (np.nan, np.nan)
-            continue
-
-        # check size criteria
-        if query.shape[0] < min_bins or reference.shape[0] < min_bins:
-            no_pass.add(pair_ix)
-            results[pair_ix] = (np.nan, np.nan)
-            continue
-
-        # resize matrices if needed
-        size_factor = len(reference) / len(query)
-        if size_factor < 1:
-            reference = resize(reference, np.shape(query), order=0,
-                               mode='reflect').astype(np.float64)
-        elif size_factor > 1:
-            query = resize(query, np.shape(reference), order=0,
-                           mode='reflect').astype(np.float64)
-
-        # check if either matrix needs to be flipped
-        if reference_region.strand != query_region.strand:
-            query = np.fliplr(np.flipud(query))
-
-        # check content in unmappable bins in input matrices
-        idxs = []
-        init_filter_pass = True
-        if mappability_cutoff > 0:
-            ms = [reference, query]
-            for m in ms:
-                m = np.array(m)
-                idx = find_masked_rows(m, masking_value=default_value)
-                idxs.append(idx)
-                if len(idx) / np.shape(m)[0] > mappability_cutoff:
-                    init_filter_pass = False
-        if not init_filter_pass:
-            no_pass.add(pair_ix)
-            results[pair_ix] = (np.nan, np.nan)
-            continue
-
-        # remove masked bins
-        if not keep_unmappable_bins:
-            target_rows = np.union1d(*idxs)
-            reference = remove_rows(reference, target_rows)
-            query = remove_rows(query, target_rows)
-
-        # compare!
-        if absolute_window_size:
-            window_size = absolute_window_size
         else:
-            window_size = int(np.shape(reference)[0] * relative_window_size)
-        if window_size % 2 == 0:
-            window_size -= 1
-
-        # prevent from going lower than three.
-        # breaks at ws = 1 because of 0 division, and 2 is not odd.
-        window_size = max(window_size, 3)
-
-        # actual comparison
-        curr_ssim = structural_similarity(reference, query, win_size=window_size)
-        curr_sn = SN(reference, query)
-
-        results[pair_ix] = (curr_ssim, curr_sn)
+            results[pair_ix] = (ssim, sn)
 
     logger.debug('[WORKER #{}]: Done!'.format(worker_ID))
 
