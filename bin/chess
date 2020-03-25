@@ -263,7 +263,7 @@ class Chess(object):
             logger.info("Submitting pairs for comparison")
             submitted_counter = 0
             for chunk in chunks(pairs, threads):
-                input_queue.put(chunk)
+                input_queue.put([chunk, True])
                 submitted_counter += 1
 
             ssim_results = dict()
@@ -273,7 +273,6 @@ class Chess(object):
                 if isinstance(out, Exception):
                     raise out
                 for pair_ix, ssim, sn in out:
-                #pair_ix, ssim, sn = out
                     ssim_results[pair_ix] = [ssim, sn, np.nan]
                     if not np.isnan(ssim):
                         all_ssim.append(ssim)
@@ -355,19 +354,16 @@ class Chess(object):
 
                     submitted_counter = 0
                     for chunk in chunks(background_pairs, threads):
-                        input_queue.put(chunk)
+                        input_queue.put([chunk, False])
                         submitted_counter += 1
 
                     background_ssim_results = []
-                    background_sn_results = []
                     for i in range(submitted_counter):
                         out = output_queue.get(block=True)
                         if isinstance(out, Exception):
                             raise out
                         for pair_ix, ssim, sn in out:
-                            #pair_ix, ssim, sn = out
                             background_ssim_results.append(ssim)
-                            background_sn_results.append(sn)
 
                     try:
                         original_ssim, _, _ = ssim_results[pair_id]
