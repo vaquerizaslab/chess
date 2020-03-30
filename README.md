@@ -28,9 +28,9 @@ It requires the packages `cython` (0.29.16), `scipy` (1.0.0), `numpy` (1.14.0), 
 
 ## Installation
 
-### Pypi package index (`pip`)
+**Please make sure to have `cython` (0.29.16) installed before installling CHESS via `pip` or `python install setup.py`, or use a `pip` version >= 20.0.2.**
 
-**Please make sure to have `cython` (0.29.16) installed before installling CHESS via `pip`, or use a `pip` version >= 20.0.2.**
+### Pypi package index (`pip`)
 
 CHESS can be installed within just a few minutes from the command line using PyPI:
 
@@ -41,8 +41,14 @@ pip install chess-hic
 ### From source
 
 You can also download the code from our [GitHub repo](https://github.com/vaquerizaslab/chess)
-and install CHESS manually. In this case, CHESS dependencies won't be installed automatically,
-so please ensure you have the necessary [requirements](#requirements) installed.
+and install CHESS manually. Make sure to have `cython` installed. The other dependencies should be downloaded autmatically; if you encounter problems, try to install the other [requirements](#requirements) manually.
+
+```bash
+git clone https://github.com/vaquerizaslab/chess  # or download manually
+pip install chess
+```
+
+or
 
 ```bash
 git clone https://github.com/vaquerizaslab/chess  # or download manually
