@@ -97,6 +97,20 @@ contains four columns:
   compared to other scores in the same run. For z-scores in the context of a 
   proper background model, see below.
 
+When running `chess sim` to compare samples of different conditions, the goal often is
+to identify regions that with particularly striking changes. As the 3D structure might 
+change slightly across most of the genome, the most interesting regions might be the ones
+with the largest deviation from the average change: this is reflected in large negative
+values in the *z-score* column. 
+
+Z-scores cannot be compared between runs of CHESS, as they are a type of 
+within sample normalisation. To compare between runs of CHESS, the ssim values
+should be used. For instance, a change of experimental conditions might not lead to marked
+changes in particular regions of the genome, but instead induce an uniform genome wide effect
+(e.g. global decompaction of TADs). Then, one might be interested in comparing the average
+ssim from `chess sim` runs on replicates of one
+condition to the average ssim of a run between conditions.
+
 ### Comparing regions across species
 
 The following will run a comparison of 4 regions of varying sizes located on chromosome 
@@ -128,7 +142,17 @@ The output file `examples/Mmus_Hsap_syntenic/comparison_results.tsv` has six col
   a similarity of ssim or higher given the comparisons in the background model
   - in this case, all other regions in the query genome of the same window size
 
-
+In contrast to the intra-species comparison described above, where we tried to find 
+strong differences between samples, we are here concerned with assessing whether
+two regions are significantly similar. To answer that questions, we first need to
+determine the distribution of similarities between our reference and random regions
+(here called 'background'), and then evaluate in this context the similarity between
+the reference and query pair. CHESS reports on the significance and effect size of 
+the similarity of a reference and query pair with the `p_bg` p-value and `z_bg` z-score
+described above.
+There are many conceivable ways of assembling the background set of matrices. The default way,
+chosen here with the `--background-query` flag, is to segment the genome into windows of
+query size, and compare the reference to all of those.
 
 ## Usage
 
