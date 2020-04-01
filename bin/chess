@@ -651,9 +651,9 @@ class Chess(object):
     def filter(self, argv):
         parser = MyParser(
             description='''
-            Filter results of `chess sim` by p, z, ssim, SN value.
+            Filter results of `chess sim` by p_bg, z_bg, z_ssim, ssim, SN value.
 
-            You can filter by any combination of the `-p`,
+            You can filter by any combination of the `-p``,
             `-z` (z-score), `-s` (ssim) and `-n` (SN) flags.
             Each flag takes two arguments, where the first has to be either
             `geq` (greater-equal), `leq` (less-equal), `l` (less)
@@ -692,14 +692,14 @@ class Chess(object):
             nargs=2,
             default=[None, None],
             metavar=('mode', 'value'),
-            help='''Filter by values in <p> column according to mode (geq, leq, l, or g)
+            help='''Filter by values in <p_bg> column according to mode (geq, leq, l, or g)
             and value.''')
         parser.add_argument(
             '-z',
             nargs=2,
             default=[None, None],
             metavar=('mode', 'value'),
-            help='''Filter by values in <z-score> column according to mode (geq, leq, l, or g)
+            help='''Filter by values in <z_bg> column according to mode (geq, leq, l, or g)
             and value.''')
         parser.add_argument(
             '-s',
@@ -714,6 +714,13 @@ class Chess(object):
             default=[None, None],
             metavar=('mode', 'value'),
             help='''Filter by values in <SN> column according to mode (geq, leq, l, or g)
+            and value.''')
+        parser.add_argument(
+            '-zs',
+            nargs=2,
+            default=[None, None],
+            metavar=('mode', 'value'),
+            help='''Filter by values in <z_ssim> column according to mode (geq, leq, l, or g)
             and value.''')
         parser.add_argument(
             '--score',
@@ -739,8 +746,9 @@ class Chess(object):
                               args.score))
 
         filters = {
-            'p': args.p,
-            'z-score': args.z,
+            'p_bg': args.p,
+            'z_bg': args.z,
+            'z_ssim': args.zs, 
             'ssim': args.s,
             'SN': args.n
         }
@@ -763,7 +771,7 @@ class Chess(object):
             else:
                 raise ValueError(
                     ('Specified mode {} for {} filter is not valid.'
-                     ' mode must be `geq` or `leq`.').format(
+                     ' mode must be `geq`, `leq`, `l` or `g`.').format(
                                   mode, column))
 
         pairs = load_pairs(args.pairs)
