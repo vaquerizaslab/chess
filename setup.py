@@ -23,9 +23,10 @@ class CleanCommand(Command):
 setup(
     name='chess-hic',
     version=__version__,
-    description='Comparison of Hi-C Experiments using Structural Similarity.',
+    description='Quantitative comparison and automatic feature extraction for chromatin contact data.',
     # long_description_content_type="text/markdown",
     url='https://github.com/vaquerizaslab/chess',
+    download_url='https://github.com/vaquerizaslab/chess/archive/v0.0.2.tar.gz',
     setup_requires=[
         'setuptools>=18.0',
     ],
