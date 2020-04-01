@@ -1,6 +1,6 @@
 # CHESS
 
-CHESS is a tool for the assessment of similarity between Hi-C matrices using structural similarity.
+CHESS is a tool for the comparison and automatic feature extraction for chromatin contact data.
 
 <!-- TOC depthFrom:1 depthTo:8 withLinks:1 updateOnSave:1 orderedList:0 -->
 
