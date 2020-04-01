@@ -32,7 +32,7 @@ It requires the packages `cython` (0.29.16), `scipy` (1.0.0), `numpy` (1.14.0), 
 
 ### Via `pip` from the Python Package Index (PyPi)
 
-CHESS can be installed within just a few minutes from the command line using PyPI:
+CHESS can be installed within just a few minutes from the command line using PyPi:
 
 ```
 pip install chess-hic
