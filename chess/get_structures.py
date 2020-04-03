@@ -112,7 +112,7 @@ def extract_structures(
         thres1, thres2 = mean + 0.5 * std, mean - 0.5 * std
         positive = np.where(or_matrix > thres1, or_matrix, 0.)
         negative = np.where(or_matrix < thres2, or_matrix, 0.)
-        negative = negative * -1
+        negative = np.abs(negative)
 
         # denoise
         denoise_positive = restoration.denoise_bilateral(
