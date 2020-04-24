@@ -851,9 +851,9 @@ class Chess(object):
                     the number of rows in the provided query matrix.''')
 
         parser.add_argument(
-            'out',
+            'outdir',
             type=str,
-            help='''Path to outfile.''')
+            help='''Path to output directory.''')
 
         args = parser.parse_args(argv[2:])
         from chess.helpers import load_pairs_iter, load_regions, \
@@ -865,7 +865,7 @@ class Chess(object):
         query_matrix_file = args.query_sparse
         query_regions_file = args.query_regions
         pairs_file = args.pairs
-        output_file = args.out
+        output_dir = args.out
 
         logger.debug('[MAIN]: Parameters:')
         logger.debug(args)
@@ -891,7 +891,7 @@ class Chess(object):
             reference_region_trees,
             query_edges,
             query_region_trees,
-            pairs, output_file)
+            pairs, output_dir)
         logger.info('[MAIN]: Results collected')
 
     def crosscorrelate(self, argv):
@@ -914,9 +914,9 @@ class Chess(object):
             corresponding to reference and chrom2, start2, ... to query.''')
 
         parser.add_argument(
-            'out',
+            'outdir',
             type=str,
-            help='''Path to outfile.''')
+            help='''Path to output directory.''')
 
         args = parser.parse_args(argv[2:])
 
@@ -925,9 +925,9 @@ class Chess(object):
 
         input_file = args.extracted_file
         pairs_file = args.pairs
-        output_file = args.out
+        output_dir = args.out
         pairs = list(load_pairs_iter(pairs_file))
-        correlate2d(input_file, output_file, pairs)
+        correlate2d(input_file, output_dir, pairs)
 
 
 def chess_parser():
