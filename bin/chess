@@ -506,12 +506,18 @@ class Chess(object):
 
         def load_chromosome_sizes(path):
             """Load chromosome sizes from file.
-            :param path: Path to chromosome sizes file
-            :returns: The file in dictionary representation.
+
+            Args:
+                path (str): Path to chromosome sizes file
+
+            Returns:
+                dict: The file in dictionary representation.
             """
             chromosome_sizes = {}
             with open(path, 'r') as f:
                 for line in f:
+                    if line == '\n':
+                        continue
                     fields = line.strip().split()
                     chromosome, size = fields[:2]
                     chromosome_sizes[chromosome] = int(size)
