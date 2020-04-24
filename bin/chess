@@ -865,7 +865,7 @@ class Chess(object):
         query_matrix_file = args.query_sparse
         query_regions_file = args.query_regions
         pairs_file = args.pairs
-        output_dir = args.out
+        output_dir = args.outdir
 
         logger.debug('[MAIN]: Parameters:')
         logger.debug(args)
@@ -925,7 +925,7 @@ class Chess(object):
 
         input_file = args.extracted_file
         pairs_file = args.pairs
-        output_dir = args.out
+        output_dir = args.outdir
         pairs = list(load_pairs_iter(pairs_file))
         correlate2d(input_file, output_dir, pairs)
 
