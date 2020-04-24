@@ -133,8 +133,8 @@ class Chess(object):
             '--background-regions', dest='background_regions',
             type=str,
             help='''BED file with regions to be used for background calculations.
-                            If provided, CHESS will generate Z-scores and P-values for 
-                            similarities.''')
+                    If provided, CHESS will generate Z-scores and P-values for
+                    similarities.''')
 
         parser.add_argument(
             '--background-query', dest='background_query',
@@ -524,12 +524,14 @@ class Chess(object):
             try:
                 chromosome_sizes = pbt.chromsizes(args.genome)
                 if len(chromosome_sizes) == 0:
-                    raise ValueError("Genome not recognised in pybedtools.chromsizes: {}".format(args.genome))
+                    raise ValueError(
+                        "Genome not recognised in pybedtools.chromsizes: {}".format(
+                            args.genome))
                 # pbt has (start, end) as values,
                 # where start is usually 0
                 chromosome_sizes = {
                     k: v[1] for k, v in chromosome_sizes.items()}
-            except ValueError:
+            except (OSError, ValueError):
                 logger.info((
                     'No entry found with pybedtools.'
                     ' Trying to read from file.'))
