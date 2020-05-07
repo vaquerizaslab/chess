@@ -84,9 +84,11 @@ class Chess(object):
         parser = MyParser(
             description='''
             Compare structures between pairs of Hi-C matrices using the
-            structural similarity index. Compute p-value and z-value after
-            obtaining a background distribution of similarity values of the
-            reference in the pair to the rest of the queries source genome.''',
+            structural similarity index.  If --background-query or
+            --background-regions is specified, compute p-value and
+            z-value after obtaining a background distribution
+            of similarity values of the reference in the pair
+            to specfied background regions.''',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         parser.add_argument(
@@ -121,7 +123,7 @@ class Chess(object):
             'pairs',
             type=str,
             help='''Region pairs to compare.
-            Must be in bedpe format with chrom1, start1, ...
+            Expected to be in bedpe format with chrom1, start1, ...
             corresponding to reference and chrom2, start2, ... to query.''')
 
         parser.add_argument(
