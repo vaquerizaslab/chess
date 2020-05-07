@@ -373,6 +373,24 @@ def edges_dict_from_fanc(hic):
     return edges_dict
 
 
+def oe_edges_dict_from_fanc(hic):
+    """Constructs edges_dict from edges
+    present in a fanc hic object. Weights are
+    transformed to observed / expected values.
+
+    Args:
+        hic (fanc.Hic): Object created by fanc.load()
+
+    Returns:
+        dict: Nexted dictionary that allows
+              queries like: dict[source][sink] = weight
+    """
+    edges_dict = defaultdict(dict)
+    for e in hic.edges(oe=True, lazy=True):
+        edges_dict[e.source][e.sink] = e.weight
+    return edges_dict
+
+
 def load_sparse_matrix(file_name, ix_converter=None, sep="\t"):
     return list(edges_from_sparse_matrix(file_name, ix_converter, sep))
 
