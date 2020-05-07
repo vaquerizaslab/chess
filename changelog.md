@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Accept data in FANC, Juicer and Cooler formats (.hic, .cool, .mcool)
+
 ### Fixed
 - `chess pairs`: Fix error on empty lines in chromosome sizes file.
 - `chess pairs`: Catch OSError raised by pybedtools when the provided path is not recognized as a UCSC genome id.
