@@ -92,29 +92,45 @@ class Chess(object):
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         parser.add_argument(
-            'reference_sparse',
+            'reference_contacts',
             type=str,
-            help='''Balanced or observed / expected Hi-C matrix in sparse format
-            for reference sample.
-            (each line:
-                <row region index> <column region index> <matrix value>)''')
+            help='''
+            Balanced contact matrix for the reference sample
+            in one of the following formats:
+                fanc .hic,
+                juicer .hic@<resolution>,
+                cooler .cool@<resolution> or .mcool@<resolution>,
+                sparse format (each line:
+                    <row region index> <column region index> <matrix value>).
+
+            If the file is in sparse format, the corresponding regions
+            BED file needs to be passed via --reference-regions.
+            ''')
 
         parser.add_argument(
-            'reference_regions',
+            '--reference-regions', dest="reference_regions",
             type=str,
             help='''BED file (no header) with regions corresponding to
             the number of rows in the provided reference matrix.''')
 
         parser.add_argument(
-            'query_sparse',
+            'query_contacts',
             type=str,
-            help='''Balanced or observed / expected Hi-C matrix in sparse format
-            for query sample.
-            (each line:
-                <row region index> <column region index> <matrix value>)''')
+            help='''
+            Balanced contact matrix for the query sample
+            in one of the following formats:
+                fanc .hic,
+                juicer .hic@<resolution>,
+                cooler .cool@<resolution> or .mcool@<resolution>,
+                sparse format (each line:
+                    <row region index> <column region index> <matrix value>).
+
+            If the file is in sparse format, the corresponding regions
+            BED file needs to be passed via --query-regions.
+            ''')
 
         parser.add_argument(
-            'query_regions',
+            '--query-regions', dest="query_regions",
             type=str,
             help='''BED file (no header) with regions corresponding to
             the number of rows in the provided query matrix.''')
