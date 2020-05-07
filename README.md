@@ -28,7 +28,7 @@ It requires the packages `cython` (0.29.16), `scipy` (1.0.0), `numpy` (1.14.0), 
 
 ## Installation
 
-**Please make sure to have `cython` (0.29.16) installed before installling CHESS via `pip` or `python install setup.py`, or use a `pip` version >= 20.0.2.**
+**When installing with a python version < 3.8, Please make sure to have `cython` (0.29.16) installed before installling CHESS via `pip` or `python install setup.py`, or use a `pip` version >= 20.0.2.**
 
 ### Via `pip` from the Python Package Index (PyPi)
 
