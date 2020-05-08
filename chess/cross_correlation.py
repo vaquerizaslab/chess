@@ -63,7 +63,7 @@ def correlate2d(file, output_folder, pairs):
         path.join(output_folder, 'correlation_dataframe_%s.csv' % (tag)))
 
     Sum_of_squared_distances = []
-    K = range(1, 10)
+    K = range(1, 15)
     for k in K:
         km = KMeans(n_clusters=k)
         km = km.fit(scaled)
