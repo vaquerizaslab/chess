@@ -82,7 +82,11 @@ def extract_structures(
     query_edges,
     query_regions,
     pairs,
-    output
+    output,
+    windowsize,
+    sigma_spatial,
+    size_medianfilter,
+    closing_square
 ):
     pos_query = 0
     pos_reference = 0
@@ -118,20 +122,20 @@ def extract_structures(
         denoise_positive = restoration.denoise_bilateral(
             positive,
             sigma_color=np.mean(positive),
-            win_size=3,
-            sigma_spatial=3,
+            win_size=windowsize,
+            sigma_spatial=sigma_spatial,
             bins=size,
             multichannel=False)
         denoise_negative = restoration.denoise_bilateral(
             negative,
             sigma_color=np.mean(negative),
-            win_size=3,
-            sigma_spatial=3,
+            win_size=windowsize,
+            sigma_spatial=sigma_spatial,
             bins=size,
             multichannel=False)
         # smooth
-        filter_positive = ndi.median_filter(denoise_positive, 9)
-        filter_negative = ndi.median_filter(denoise_negative, 9)
+        filter_positive = ndi.median_filter(denoise_positive, size_medianfilter)
+        filter_negative = ndi.median_filter(denoise_negative, size_medianfilter)
 
         # binarise
         if np.all(filter_positive == 0.):
@@ -153,9 +157,9 @@ def extract_structures(
         rot2 = ndi.rotate(zm2, 45, reshape=False)
 
         # Close morphology
-        img1 = closing(rot1, square(8))
+        img1 = closing(rot1, square(closing_square))
         label_x1 = label(img1)
-        img2 = closing(rot2, square(8))
+        img2 = closing(rot2, square(closing_square))
         label_x2 = label(img2)
 
         zm1_reference = clipped_zoom(reference, 0.7)
