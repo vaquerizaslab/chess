@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- `--window-size`, `--sigma-spatial`, `--size-medianfilter` and `--closing-square` optional parameters for more control in the feature extraction.
+
 ### Fixed
 - `chess pairs`: Fix error on empty lines in chromosome sizes file.
 - `chess pairs`: Catch OSError raised by pybedtools when the provided path is not recognized as a UCSC genome id.
