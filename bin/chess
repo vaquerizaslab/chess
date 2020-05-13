@@ -956,21 +956,21 @@ class Chess(object):
                      by default the windows size is the 3 x 3 bins.Higher values will average bins with larger differences.''')
 
         parser.add_argument(
-            '--sigma-spatial',
+            '--sigma-spatial', dest="sigma_spatial",
             type=int,
             default=3,
             help='''Gaussian function of the Euclidean distance between two bins and its standard deviation. 
                     By default is 3. Higher values will average bins with larger differences.''')
 
         parser.add_argument(
-            '--size-medianfilter',
+            '--size-medianfilter', dest="size_medianfilter",
             type=int,
             default=9,
             help='''Windows size used to scan and smooth the contained bins. By default it uses windows of 9. 
                     Note that higher values will smooth larger structures.''')
 
         parser.add_argument(
-            '--closing-square',
+            '--closing-square', dest="closing_square",
             type=int,
             default=8,
             help='''Size of the square used to remove noise, and fill structures. By default it uses a square of 8 x 8.
@@ -1061,9 +1061,9 @@ class Chess(object):
             query_region_trees,
             pairs, output_file,
             args.windowsize,
-            args.sigma-spatial,
-            args.size-medianfilter,
-            args.closing-square)
+            args.sigma_spatial,
+            args.size_medianfilter,
+            args.closing_square)
         logger.info('[MAIN]: Results collected')
 
     def crosscorrelate(self, argv):
