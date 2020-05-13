@@ -267,8 +267,8 @@ class Chess(object):
             logger.info('[MAIN]: Attempting to load as sparse matrix file')
             try:
                 assert reference_regions_file is not None, """
-                    Reference:
-                        Regions file needs to be specified for sparse input.
+                    Reference regions file needs to be
+                    specified for sparse input.
                     """
                 reference_regions, reference_ix_converter, _ = load_regions(
                     reference_regions_file)
@@ -306,7 +306,7 @@ class Chess(object):
             logger.info('[MAIN]: Attempting to load as sparse matrix file')
             try:
                 assert query_regions_file is not None, """
-                    Reference: Regions file needs to be
+                    Query regions file needs to be
                     specified for sparse input.
                     """
                 query_regions, query_ix_converter, _ = load_regions(
