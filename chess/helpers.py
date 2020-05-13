@@ -496,3 +496,65 @@ def read_chromosome_sizes(file_name):
                 chromosome, chromosome_length = line.split("\t")
                 chrom_sizes[chromosome] = int(chromosome_length)
     return chrom_sizes
+
+
+def load_contacts(matrix_file, regions_file=None):
+    import fanc
+    from chess.oe import observed_expected
+    try:
+        # try loading via fanc
+        reference_loaded = fanc.load(matrix_file)
+        edges = oe_edges_dict_from_fanc(reference_loaded)
+        region_trees = region_interval_trees(
+            reference_loaded.regions)
+    except ValueError:
+        try:
+            assert regions_file is not None, """
+                Reference regions file needs to be
+                specified for sparse input.
+                """
+            regions, _ix_converter, _ = load_regions(
+                regions_file)
+            region_trees = region_interval_trees(
+                regions)
+            _, reference_oe = observed_expected(
+                regions_file, matrix_file)
+            edges = edges_dict_from_sparse(reference_oe)
+        except AssertionError:
+            raise ValueError("""
+                Reference could not be loaded.
+                Please specify a valid input file.
+                Files in sparse format can only be loaded if
+                --reference-regions is specified.""")
+    return edges, region_trees
+
+
+def load_oe_contacts(matrix_file, regions_file=None):
+    import fanc
+    try:
+        # try loading via fanc
+        reference_loaded = fanc.load(matrix_file)
+        edges = edges_dict_from_fanc(reference_loaded)
+        region_trees = region_interval_trees(
+            reference_loaded.regions)
+    except ValueError:
+        try:
+            assert regions_file is not None, """
+                Reference regions file needs to be
+                specified for sparse input.
+                """
+            regions, ix_converter, _ = load_regions(
+                regions_file)
+            region_trees = region_interval_trees(
+                regions)
+            edges = edges_dict_from_sparse(
+                edges_from_sparse_matrix(
+                    matrix_file,
+                    ix_converter))
+        except AssertionError:
+            raise ValueError("""
+                Reference could not be loaded.
+                Please specify a valid input file.
+                Files in sparse format can only be loaded if
+                --reference-regions is specified.""")
+    return edges, region_trees
