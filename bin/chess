@@ -851,9 +851,37 @@ class Chess(object):
                     the number of rows in the provided query matrix.''')
 
         parser.add_argument(
-            'outdir',
+            'out',
             type=str,
             help='''Path to output directory.''')
+
+        parser.add_argument(
+            '--windowsize',
+            type=int,
+            default=3,
+            help='''Window size to average the bins according to their spatial closeness and their radiometric similarity, 
+                     by default the windows size is the 3 x 3 bins.Higher values will average bins with larger differences.''')
+
+        parser.add_argument(
+            '--sigma-spatial',
+            type=int,
+            default=3,
+            help='''Gaussian function of the Euclidean distance between two bins and its standard deviation. 
+                    By default is 3. Higher values will average bins with larger differences.''')
+
+        parser.add_argument(
+            '--size-medianfilter',
+            type=int,
+            default=9,
+            help='''Windows size used to scan and smooth the contained bins. By default it uses windows of 9. 
+                    Note that higher values will smooth larger structures.''')
+
+        parser.add_argument(
+            '--closing-square',
+            type=int,
+            default=8,
+            help='''Size of the square used to remove noise, and fill structures. By default it uses a square of 8 x 8.
+                      Note that higher values will enclose larger structures and remove punctuate or more looping structures.''')
 
         args = parser.parse_args(argv[2:])
         from chess.helpers import load_pairs_iter, load_regions, \
@@ -865,7 +893,7 @@ class Chess(object):
         query_matrix_file = args.query_sparse
         query_regions_file = args.query_regions
         pairs_file = args.pairs
-        output_dir = args.outdir
+        output_file = args.out
 
         logger.debug('[MAIN]: Parameters:')
         logger.debug(args)
@@ -891,7 +919,11 @@ class Chess(object):
             reference_region_trees,
             query_edges,
             query_region_trees,
-            pairs, output_dir)
+            pairs, output_file,
+            args.windowsize,
+            args.sigma-spatial,
+            args.size-medianfilter,
+            args.closing-square)
         logger.info('[MAIN]: Results collected')
 
     def crosscorrelate(self, argv):
