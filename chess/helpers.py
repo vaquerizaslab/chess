@@ -526,7 +526,7 @@ def load_contacts(matrix_file, regions_file=None):
                 Please specify a valid input file.
                 Files in sparse format can only be loaded if
                 --reference-regions is specified.""")
-    return edges, region_trees
+    return edges, region_trees, regions
 
 
 def load_oe_contacts(matrix_file, regions_file=None):
@@ -557,4 +557,4 @@ def load_oe_contacts(matrix_file, regions_file=None):
                 Please specify a valid input file.
                 Files in sparse format can only be loaded if
                 --reference-regions is specified.""")
-    return edges, region_trees
+    return edges, region_trees, regions
