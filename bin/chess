@@ -267,11 +267,13 @@ class Chess(object):
             logger.info('[MAIN]: Attempting to load as sparse matrix file')
             try:
                 assert reference_regions_file is not None, """
-                    Reference: Regions file needs to be specified for sparse input.
+                    Reference:
+                        Regions file needs to be specified for sparse input.
                     """
                 reference_regions, reference_ix_converter, _ = load_regions(
                     reference_regions_file)
-                reference_region_trees = region_interval_trees(reference_regions)
+                reference_region_trees = region_interval_trees(
+                    reference_regions)
                 if is_oe:
                     reference_edges = edges_dict_from_sparse(
                         edges_from_sparse_matrix(
