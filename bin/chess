@@ -339,12 +339,19 @@ class Chess(object):
 
         pool = None
         try:
-            pool = mp.Pool(threads, chunk_comparison_worker,
-                           (input_queue, output_queue,
-                            reference_edges, reference_region_trees,
-                            query_edges, query_region_trees,
-                            20, args.keep_unmappable_bins, args.absolute_windowsize,
-                            args.relative_windowsize, args.mappability_cutoff))
+            pool = mp.Pool(threads,
+                           chunk_comparison_worker,
+                           (input_queue,
+                            output_queue,
+                            reference_edges,
+                            reference_region_trees,
+                            query_edges,
+                            query_region_trees,
+                            20,
+                            args.keep_unmappable_bins,
+                            args.absolute_windowsize,
+                            args.relative_windowsize,
+                            args.mappability_cutoff))
 
             logger.info("Submitting pairs for comparison")
             submitted_counter = 0
