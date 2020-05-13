@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 import textwrap
+import fanc
 from tqdm import tqdm as progressbar
 
 
@@ -84,35 +85,53 @@ class Chess(object):
         parser = MyParser(
             description='''
             Compare structures between pairs of Hi-C matrices using the
-            structural similarity index. Compute p-value and z-value after
-            obtaining a background distribution of similarity values of the
-            reference in the pair to the rest of the queries source genome.''',
+            structural similarity index.  If --background-query or
+            --background-regions is specified, compute p-value and
+            z-value after obtaining a background distribution
+            of similarity values of the reference in the pair
+            to specfied background regions.''',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         parser.add_argument(
-            'reference_sparse',
+            'reference_contacts',
             type=str,
-            help='''Balanced or observed / expected Hi-C matrix in sparse format
-            for reference sample.
-            (each line:
-                <row region index> <column region index> <matrix value>)''')
+            help='''
+            Balanced contact matrix for the reference sample
+            in one of the following formats:
+                fanc .hic,
+                juicer .hic@<resolution>,
+                cooler .cool@<resolution> or .mcool@<resolution>,
+                sparse format (each line:
+                    <row region index> <column region index> <matrix value>).
+
+            If the file is in sparse format, the corresponding regions
+            BED file needs to be passed via --reference-regions.
+            ''')
 
         parser.add_argument(
-            'reference_regions',
+            '--reference-regions', dest="reference_regions",
             type=str,
             help='''BED file (no header) with regions corresponding to
             the number of rows in the provided reference matrix.''')
 
         parser.add_argument(
-            'query_sparse',
+            'query_contacts',
             type=str,
-            help='''Balanced or observed / expected Hi-C matrix in sparse format
-            for query sample.
-            (each line:
-                <row region index> <column region index> <matrix value>)''')
+            help='''
+            Balanced contact matrix for the query sample
+            in one of the following formats:
+                fanc .hic,
+                juicer .hic@<resolution>,
+                cooler .cool@<resolution> or .mcool@<resolution>,
+                sparse format (each line:
+                    <row region index> <column region index> <matrix value>).
+
+            If the file is in sparse format, the corresponding regions
+            BED file needs to be passed via --query-regions.
+            ''')
 
         parser.add_argument(
-            'query_regions',
+            '--query-regions', dest="query_regions",
             type=str,
             help='''BED file (no header) with regions corresponding to
             the number of rows in the provided query matrix.''')
@@ -121,7 +140,7 @@ class Chess(object):
             'pairs',
             type=str,
             help='''Region pairs to compare.
-            Must be in bedpe format with chrom1, start1, ...
+            Expected to be in bedpe format with chrom1, start1, ...
             corresponding to reference and chrom2, start2, ... to query.''')
 
         parser.add_argument(
@@ -187,8 +206,8 @@ class Chess(object):
             '--converted-input',
             action='store_true',
             default=False,
-            help='''Use if input sparse matrices are already observed / expected
-            matrices. Will skip transformation.''')
+            help='''Use if input contacts are already observed / expected
+            transformed.''')
 
         parser.add_argument(
             '--limit-background',
@@ -201,7 +220,8 @@ class Chess(object):
 
         from chess.helpers import load_pairs_iter, load_regions, \
             region_interval_trees, GenomicRegion, \
-            edges_dict, edges_from_sparse_matrix, chunks
+            edges_dict_from_fanc, edges_from_sparse_matrix, chunks, \
+            edges_dict_from_sparse, oe_edges_dict_from_fanc
         from chess.sim import chunk_comparison_worker
         from chess.oe import observed_expected
         import multiprocessing as mp
@@ -209,9 +229,9 @@ class Chess(object):
         from collections import defaultdict
 
         reference_regions_file = args.reference_regions
-        reference_matrix_file = args.reference_sparse
+        reference_matrix_file = args.reference_contacts
         query_regions_file = args.query_regions
-        query_matrix_file = args.query_sparse
+        query_matrix_file = args.query_contacts
         pairs_file = args.pairs
         threads = args.threads
         is_converted = args.converted_input
@@ -223,25 +243,80 @@ class Chess(object):
         logger.debug('[MAIN]: Parameters:')
         logger.debug(args)
 
-        logger.info('[MAIN]: Loading and indexing Hi-C regions')
-        reference_regions, reference_ix_converter, _ = load_regions(reference_regions_file)
-        reference_region_trees = region_interval_trees(reference_regions)
-        query_regions, query_ix_converter, _ = load_regions(query_regions_file)
-        query_region_trees = region_interval_trees(query_regions)
+        logger.info('[MAIN]: Loading reference contact data')
+        try:
+            # try loading via fanc
+            reference_loaded = fanc.load(reference_matrix_file)
+            if is_converted:
+                reference_edges = edges_dict_from_fanc(reference_loaded)
+            else:
+                logger.info('[MAIN]: Converting to observed / expected')
+                reference_edges = oe_edges_dict_from_fanc(reference_loaded)
+            reference_region_trees = region_interval_trees(
+                reference_loaded.regions)
+        except ValueError:
+            logger.info('[MAIN]: Attempting to load as sparse matrix file')
+            try:
+                assert reference_regions_file is not None, """
+                    Reference: Regions file needs to be specified for sparse input.
+                    """
+                reference_regions, reference_ix_converter, _ = load_regions(
+                    reference_regions_file)
+                reference_region_trees = region_interval_trees(reference_regions)
+                if is_converted:
+                    reference_edges = edges_dict_from_sparse(
+                        edges_from_sparse_matrix(
+                            reference_matrix_file,
+                            reference_ix_converter))
+                else:
+                    logger.info('[MAIN]: Converting to observed / expected')
+                    _, reference_oe = observed_expected(
+                        reference_regions_file, reference_matrix_file)
+                    reference_edges = edges_dict_from_sparse(reference_oe)
+            except AssertionError:
+                raise ValueError("""
+                    Reference could not be loaded.
+                    Please specify a valid input file.
+                    Files in sparse format can only be loaded if
+                    --reference-regions is specified.""")
 
-        logger.info('[MAIN]: Loading Hi-C contacts')
-        if not is_converted:
-            logger.info('[MAIN]: Converting to observed / expected')
-            _, reference_oe = observed_expected(reference_regions_file, reference_matrix_file)
-            reference_edges = edges_dict(reference_oe)
-
-            _, query_oe = observed_expected(query_regions_file, query_matrix_file)
-            query_edges = edges_dict(query_oe)
-        else:
-            reference_edges = edges_dict(edges_from_sparse_matrix(reference_matrix_file,
-                                                                  reference_ix_converter))
-            query_edges = edges_dict(edges_from_sparse_matrix(query_matrix_file,
-                                                              query_ix_converter))
+        logger.info('[MAIN]: Loading query contact data')
+        try:
+            # try loading via fanc
+            query_loaded = fanc.load(query_matrix_file)
+            if is_converted:
+                query_edges = edges_dict_from_fanc(query_loaded)
+            else:
+                logger.info('[MAIN]: Converting to observed / expected')
+                query_edges = oe_edges_dict_from_fanc(query_loaded)
+            query_region_trees = region_interval_trees(
+                query_loaded.regions)
+        except ValueError:
+            logger.info('[MAIN]: Attempting to load as sparse matrix file')
+            try:
+                assert query_regions_file is not None, """
+                    Reference: Regions file needs to be
+                    specified for sparse input.
+                    """
+                query_regions, query_ix_converter, _ = load_regions(
+                    query_regions_file)
+                query_region_trees = region_interval_trees(query_regions)
+                if is_converted:
+                    query_edges = edges_dict_from_sparse(
+                        edges_from_sparse_matrix(
+                            query_matrix_file,
+                            query_ix_converter))
+                else:
+                    logger.info('[MAIN]: Converting to observed / expected')
+                    _, query_oe = observed_expected(
+                        query_regions_file, query_matrix_file)
+                    query_edges = edges_dict_from_sparse(query_oe)
+            except AssertionError:
+                raise ValueError("""
+                    Query could not be loaded.
+                    Please specify a valid input file.
+                    Files in sparse format can only be loaded if
+                    --query-regions is specified.""")
 
         logger.info('[MAIN]: Loading region pairs')
         pairs = list(load_pairs_iter(pairs_file))
@@ -812,43 +887,61 @@ class Chess(object):
     def extract(self, argv):
         parser = MyParser(
             description='''
-            Extract the specific regions that are different 
+            Extract the specific regions that are different
             between the regions identified by CHESS.''',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
         parser.add_argument(
             'pairs',
             type=str,
-            help='''Region pairs that have been identified to 
-            be significantly different. Must be in bedpe format with chrom1, start1, ...
+            help='''Region pairs that have been identified to
+            be significantly different. Expected to be in
+            bedpe format with chrom1, start1, ...
             corresponding to reference and chrom2, start2, ... to query.''')
 
         parser.add_argument(
-            'reference_sparse',
+            'reference_contacts',
             type=str,
-            help='''Balanced Hi-C matrix in sparse format
-                    for reference sample.
-                    (each line:
-                        <row region index> <column region index> <matrix value>)''')
-        parser.add_argument(
-            'reference_regions',
-            type=str,
-            help='''BED file (no header) with regions corresponding to
-                    the number of rows in the provided reference matrix.''')
+            help='''
+            Balanced contact matrix for the reference sample
+            in one of the following formats:
+                fanc .hic,
+                juicer .hic@<resolution>,
+                cooler .cool@<resolution> or .mcool@<resolution>,
+                sparse format (each line:
+                    <row region index> <column region index> <matrix value>).
+
+            If the file is in sparse format, the corresponding regions
+            BED file needs to be passed via --reference-regions.
+            ''')
 
         parser.add_argument(
-            'query_sparse',
-            type=str,
-            help='''Balanced Hi-C matrix in sparse format
-                    for query sample.
-                    (each line:
-                        <row region index> <column region index> <matrix value>)''')
-
-        parser.add_argument(
-            'query_regions',
+            '--reference-regions', dest="reference_regions",
             type=str,
             help='''BED file (no header) with regions corresponding to
-                    the number of rows in the provided query matrix.''')
+            the number of rows in the provided reference matrix.''')
+
+        parser.add_argument(
+            'query_contacts',
+            type=str,
+            help='''
+            Balanced contact matrix for the query sample
+            in one of the following formats:
+                fanc .hic,
+                juicer .hic@<resolution>,
+                cooler .cool@<resolution> or .mcool@<resolution>,
+                sparse format (each line:
+                    <row region index> <column region index> <matrix value>).
+
+            If the file is in sparse format, the corresponding regions
+            BED file needs to be passed via --query-regions.
+            ''')
+
+        parser.add_argument(
+            '--query-regions', dest="query_regions",
+            type=str,
+            help='''BED file (no header) with regions corresponding to
+            the number of rows in the provided query matrix.''')
 
         parser.add_argument(
             'out',
@@ -885,29 +978,76 @@ class Chess(object):
 
         args = parser.parse_args(argv[2:])
         from chess.helpers import load_pairs_iter, load_regions, \
-            region_interval_trees, edges_dict
-        from chess.get_structures import extract_structures, get_sparse_matrix
+            region_interval_trees, edges_dict_from_sparse, \
+            edges_dict_from_fanc, edges_from_sparse_matrix
+        from chess.get_structures import extract_structures
 
         reference_regions_file = args.reference_regions
-        reference_matrix_file = args.reference_sparse
-        query_matrix_file = args.query_sparse
+        reference_matrix_file = args.reference_contacts
+        query_matrix_file = args.query_contacts
         query_regions_file = args.query_regions
         pairs_file = args.pairs
         output_file = args.out
 
         logger.debug('[MAIN]: Parameters:')
         logger.debug(args)
-        logger.info('[MAIN]: Loading and indexing Hi-C regions')
-        reference_regions, reference_ix_converter, _ = load_regions(reference_regions_file)
-        reference_region_trees = region_interval_trees(reference_regions)
-        query_regions, query_ix_converter, _ = load_regions(query_regions_file)
-        query_region_trees = region_interval_trees(query_regions)
 
-        logger.info('[MAIN]: Loading Hi-C contacts')
-        _, reference_sparse = get_sparse_matrix(reference_regions_file, reference_matrix_file)
-        reference_edges = edges_dict(reference_sparse)
-        _, query_sparse = get_sparse_matrix(query_regions_file, query_matrix_file)
-        query_edges = edges_dict(query_sparse)
+        logger.info('[MAIN]: Loading reference contact data')
+        try:
+            # try loading via fanc
+            reference_loaded = fanc.load(reference_matrix_file)
+            reference_edges = edges_dict_from_fanc(reference_loaded)
+            reference_region_trees = region_interval_trees(
+                reference_loaded.regions)
+        except ValueError:
+            logger.info('[MAIN]: Attempting to load as sparse matrix file')
+            try:
+                assert reference_regions_file is not None, """
+                    Reference: Regions file needs
+                    to be specified for sparse input.
+                    """
+                reference_regions, reference_ix_converter, _ = load_regions(
+                    reference_regions_file)
+                reference_region_trees = region_interval_trees(
+                    reference_regions)
+                reference_edges = edges_dict_from_sparse(
+                    edges_from_sparse_matrix(
+                        reference_matrix_file,
+                        reference_ix_converter))
+            except AssertionError:
+                raise ValueError("""
+                    Reference could not be loaded.
+                    Please specify a valid input file.
+                    Files in sparse format can only be loaded if
+                    --reference-regions is specified.""")
+
+        logger.info('[MAIN]: Loading query contact data')
+        try:
+            # try loading via fanc
+            query_loaded = fanc.load(query_matrix_file)
+            query_edges = edges_dict_from_fanc(query_loaded)
+            query_region_trees = region_interval_trees(
+                query_loaded.regions)
+        except ValueError:
+            logger.info('[MAIN]: Attempting to load as sparse matrix file')
+            try:
+                assert query_regions_file is not None, """
+                    Reference: Regions file needs to be
+                    specified for sparse input.
+                    """
+                query_regions, query_ix_converter, _ = load_regions(
+                    query_regions_file)
+                query_region_trees = region_interval_trees(query_regions)
+                query_edges = edges_dict_from_sparse(
+                    edges_from_sparse_matrix(
+                        query_matrix_file,
+                        query_ix_converter))
+            except AssertionError:
+                raise ValueError("""
+                    Query could not be loaded.
+                    Please specify a valid input file.
+                    Files in sparse format can only be loaded if
+                    --query-regions is specified.""")
 
         logger.info('[MAIN]: Loading region pairs')
 

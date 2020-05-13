@@ -5,6 +5,7 @@ from setuptools import setup, find_packages, Command
 __version__ = None
 exec(open('chess/version.py').read())
 
+
 class CleanCommand(Command):
     """
     Custom clean command to tidy up the project root.
@@ -20,6 +21,7 @@ class CleanCommand(Command):
     def run(self):
         os.system('rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./htmlcov')
 
+
 setup(
     name='chess-hic',
     version=__version__,
@@ -34,6 +36,7 @@ setup(
     install_requires=[
         'cython',
         'numpy>=1.8.0',
+        'fanc>=0.8.28',
         'scikit-image',
         'future',
         'pathos',
