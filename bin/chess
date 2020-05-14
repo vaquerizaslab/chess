@@ -226,7 +226,7 @@ class Chess(object):
 
         args = parser.parse_args(argv[2:])
 
-        from chess.helpers import load_pairs_iter, load_regions, \
+        from chess.helpers import load_pairs_for_chroms, load_regions, \
             GenomicRegion, chunks, load_contacts, load_oe_contacts
         from chess.sim import chunk_comparison_worker
         import multiprocessing as mp
@@ -254,15 +254,33 @@ class Chess(object):
             reference_edges, reference_region_trees, reference_regions = loading_function(
                 reference_matrix_file, reference_regions_file)
         except ValueError:
-            logger.error('Failed to load the reference data.')
+            logger.error("""Reference contact data could not be loaded.
+                            Please specify a valid input file.
+                            Files in sparse format can only be loaded if
+                            --reference-regions is specified.""")
+            exit()
         try:
             query_edges, query_region_trees, query_regions = loading_function(
                 query_matrix_file, query_regions_file)
         except ValueError:
-            logger.error('Failed to load the query data.')
+            logger.error("""Query contact data could not be loaded.
+                            Please specify a valid input file.
+                            Files in sparse format can only be loaded if
+                            --query-regions is specified.""")
+            exit()
 
         logger.info('[MAIN]: Loading region pairs')
-        pairs = list(load_pairs_iter(pairs_file))
+        pairs, dropped = load_pairs_for_chroms(
+            pairs_file,
+            set().union(
+                set(reference_region_trees.keys()),
+                set(query_region_trees.keys())))
+        if dropped > 0:
+            logger.warning('''
+                {} region pairs have been dropped,
+                because they involve chromosomes
+                that are not present in the provided
+                contact data.'''.format(dropped))
 
         logger.info("Launching workers")
         m = mp.Manager()
