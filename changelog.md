@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `--window-size`, `--sigma-spatial`, `--size-medianfilter` and `--closing-square` optional parameters for more control in the feature extraction.
 - Accept data in FANC, Juicer and Cooler formats (.hic, .cool, .mcool)
+- Raise a warning message if the pairs file contains chromosomes that are not specified in the provided contact data.
 
 ### Fixed
 - `chess pairs`: Fix error on empty lines in chromosome sizes file.
