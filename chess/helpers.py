@@ -505,8 +505,9 @@ def load_contacts(matrix_file, regions_file=None):
         # try loading via fanc
         reference_loaded = fanc.load(matrix_file)
         edges = oe_edges_dict_from_fanc(reference_loaded)
+        regions = reference_loaded.regions
         region_trees = region_interval_trees(
-            reference_loaded.regions)
+            regions)
     except ValueError:
         try:
             assert regions_file is not None, """
@@ -535,8 +536,9 @@ def load_oe_contacts(matrix_file, regions_file=None):
         # try loading via fanc
         reference_loaded = fanc.load(matrix_file)
         edges = edges_dict_from_fanc(reference_loaded)
+        regions = reference_loaded.regions
         region_trees = region_interval_trees(
-            reference_loaded.regions)
+            regions)
     except ValueError:
         try:
             assert regions_file is not None, """
