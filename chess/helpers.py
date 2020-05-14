@@ -480,6 +480,53 @@ def load_pairs_iter(file_name, sep=None):
             yield ID, cref, cqry
 
 
+def load_pairs_for_chroms(file_name, chromosomes, sep=None):
+    """Load region pairs from bedpe file.
+
+    Read input bedpe file and convert to dict mapping the comparison ID to the
+    reference to query regions. Return only pairs which are on the specified
+    chromosomes.
+
+    :param file_name: Path to input bedpe file. Expected columns:
+        chromosome_reference, start_reference, end_reference,
+        chromosome_query, start_query, end_query,
+        comparison_id, dummy column (not used), strand_reference, strand_query
+    :param sep: Delimiter in bedpe file, defaults to None (splits by tab)
+    :returns: Dict of form {ID: (reference_region, query_region)}, with
+              *region being :class:`GenomicRegion` objects.
+    """
+    pairs = set()
+    res = []
+    dropped = 0
+    with _open(file_name, 'r') as f:
+        for line in f:
+            if line.startswith('#'):
+                continue
+            sline = line.rstrip()
+            fields = sline.split(sep)
+            if len(fields) != 10:
+                raise ValueError((
+                    "10 columns expected but {} found"
+                    " in bedpe input"
+                    ).format(len(fields)))
+            c1, s1, e1, c2, s2, e2, ID, _, str1, str2 = line.split(sep)
+            if ID in pairs:
+                raise ValueError((
+                    "Pair ID {} not unique in bedpe input!"))
+            pairs.add(ID)
+            if any(c not in chromosomes for c in (c1, c2)):
+                dropped += 1
+            else:
+                cref = GenomicRegion(
+                    chromosome=str(c1), start=int(s1) + 1,
+                    end=int(e1), strand=str(str1))
+                cqry = GenomicRegion(
+                    chromosome=str(c2), start=int(s2) + 1,
+                    end=int(e2), strand=str(str2))
+                res.append((ID, cref, cqry))
+    return res, dropped
+
+
 def chunks(l, p):
     n = int(np.ceil(len(l)/p))
     """Yield successive len(l)/p-sized chunks from l."""
@@ -511,7 +558,7 @@ def load_contacts(matrix_file, regions_file=None):
     except ValueError:
         try:
             assert regions_file is not None, """
-                Reference regions file needs to be
+                Regions file needs to be
                 specified for sparse input.
                 """
             regions, _ix_converter, _ = load_regions(
@@ -523,7 +570,7 @@ def load_contacts(matrix_file, regions_file=None):
             edges = edges_dict_from_sparse(reference_oe)
         except AssertionError:
             raise ValueError("""
-                Reference could not be loaded.
+                Contact data could not be loaded.
                 Please specify a valid input file.
                 Files in sparse format can only be loaded if
                 --reference-regions is specified.""")
@@ -541,10 +588,7 @@ def load_oe_contacts(matrix_file, regions_file=None):
             regions)
     except ValueError:
         try:
-            assert regions_file is not None, """
-                Reference regions file needs to be
-                specified for sparse input.
-                """
+            assert regions_file is not None
             regions, ix_converter, _ = load_regions(
                 regions_file)
             region_trees = region_interval_trees(
@@ -554,9 +598,5 @@ def load_oe_contacts(matrix_file, regions_file=None):
                     matrix_file,
                     ix_converter))
         except AssertionError:
-            raise ValueError("""
-                Reference could not be loaded.
-                Please specify a valid input file.
-                Files in sparse format can only be loaded if
-                --reference-regions is specified.""")
+            raise ValueError
     return edges, region_trees, regions
