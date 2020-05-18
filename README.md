@@ -73,11 +73,11 @@ _Drosophila melanogaster_ to a _zld_ knockdown (Hi-C data from Hug et al. 2017):
 ```bash
 chess sim \
 examples/Dmel_genome_scan/zld_X.sparse.gz \
-examples/Dmel_genome_scan/zld_X.regions.gz \
 examples/Dmel_genome_scan/wt_X.sparse.gz \
-examples/Dmel_genome_scan/wt_X.regions.gz \
 examples/Dmel_genome_scan/Dmel_zld_kd_wt_nc14_chrm_X_250kwindow_25kbstep.pairs.gz \
-examples/Dmel_genome_scan/comparison_results.tsv
+examples/Dmel_genome_scan/comparison_results.tsv \
+--reference-regions examples/Dmel_genome_scan/zld_X.regions.gz \
+--query-regions examples/Dmel_genome_scan/wt_X.regions.gz
 ```
 
 > NOTE: This example run should finish within 2 minutes on a single core. 
@@ -119,11 +119,11 @@ The following will run a comparison of 4 regions of varying sizes located on chr
 ```bash
 chess sim \
 examples/Mmus_Hsap_syntenic/rao2014_hg19_chr10_25kb.sparse.gz \
-examples/Mmus_Hsap_syntenic/rao2014_hg19_chr10_25kb.regions.gz \
 examples/Mmus_Hsap_syntenic/rao2014_mm10_chr19_25kb.sparse.gz \
-examples/Mmus_Hsap_syntenic/rao2014_mm10_chr19_25kb.regions.gz \
 examples/Mmus_Hsap_syntenic/hg19_mm10_syntenic_examples.pairs.gz \
-examples/Mmus_Hsap_syntenic/comparison_results.tsv --background-query
+examples/Mmus_Hsap_syntenic/comparison_results.tsv --background-query \
+--reference-regions examples/Mmus_Hsap_syntenic/rao2014_hg19_chr10_25kb.regions.gz \
+--query-regions examples/Mmus_Hsap_syntenic/rao2014_mm10_chr19_25kb.regions.gz
 ```
 
 Note the `--background-query`, which enables the query-genome based background 
