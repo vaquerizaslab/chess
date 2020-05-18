@@ -177,30 +177,11 @@ The main purpose of CHESS is the assessment of similarity between two Hi-C matri
 one of which is called the 'reference' and the other the 'query'. The following arguments 
 are mandatory to run `sim`:
 
-* A normalized Hi-C matrix file in sparse matrix format for the reference sample. 
-  This should be tab-delimited, where each line has three columns:
+* A normalized Hi-C matrix file in FAN-C, Juicer, Cooler or sparse matrix format
+  for the reference sample. If sparse, this should be tab-delimited, where each line has three columns:
   \<row index\> \<column index\> \<value\>)
 
-> NOTE: Using CHESS with large matrices at high resolution can require a lot of memory,
-> especially when using many threads. Typically, every thread will load one full
-> chromosome Hi-C map into memory (the number of threads can be controlled with the `-p` flag).
-
-> NOTE: By default, the input matrices will be converted to observed / expected matrices. 
-> In case you already have observed / expected matrices, you can use the `--converted-input` 
-> flag to skip the observed / expected conversion. You can pre-compute observed/expected 
-> matrices with `chess oe`
-
-* A BED file with region information for the reference Hi-C matrix.
-  This should be a tab-delimited file where each row contains chromosome name, start, 
-  and end coordinates (exclusive) of the region. This file must 
-  not contain any headers. If a fourth column is present, it is assumed to be a unique 
-  identifier (index/name), which is then used to refer to that region in sparse matrix 
-  format (see above).
-
-> NOTE: The required formats for the Hi-C matrix (sparse) and regions (BED) are compatible 
-> with the standard output of HiC-Pro (Servant et al. 2015).
-
-* A normalized Hi-C matrix file in sparse matrix format for the query sample.
+* A normalized Hi-C matrix file in one of the above formats for the query sample.
 
 * A BED file with region information for the query Hi-C matrix.
 
@@ -214,6 +195,23 @@ are mandatory to run `sim`:
   This file must not contain any headers. The end coordinates are exclusive.
 
 * The path to the output file.
+
+> NOTE: Contact matrices in sparse format need to be accompanied by corresponding region files,
+> set with the `--reference-regions` and/or `--query-regions` flags. They should be in 
+> BED format, tab-delimited, where each row contains chromosome name, start,  and end coordinates
+> (exclusive) of the region. This file must not contain any headers.
+> If a fourth column is present, it is assumed to be a unique identifier (index/name),
+> which is then used to refer to that region in sparse matrix format (see above).
+
+> NOTE: Using CHESS with large matrices at high resolution can require a lot of memory,
+> especially when using many threads. Typically, every thread will load one full
+> chromosome Hi-C map into memory (the number of threads can be controlled with the `-p` flag).
+
+> NOTE: By default, the input matrices will be converted to observed / expected matrices. 
+> In case you already have observed / expected matrices, you can use the `--oe-input` 
+> flag to skip the observed / expected conversion. You can pre-compute observed/expected 
+> matrices with `chess oe`
+
 
 The default mode with only the mandatory arguments will compare regions in the reference 
 to the query using the region definitions in the pairs file. The output then contains the 
@@ -258,7 +256,7 @@ With an active background model, there are more columns in the output:
 
 Optional arguments give you more control:
 
-* `--converted-input` will skip the observed / expected conversion of the input matrices. 
+* `--oe-input` will skip the observed / expected conversion of the input matrices. 
   Use if you already have observed / expected matrices or want to compare matrices in different format.
 
 * `-p <int>` lets you choose the number of cores that CHESS will use (default: 1).
@@ -381,13 +379,7 @@ The following parameters give you some control over the output:
   The 8th column is required in order to match the BEDPE standard format (see http://bedtools.readthedocs.io/en/latest/content/general-usage.html).
   This file must not contain any headers. The end coordinates are exclusive.
   
-* A normalized Hi-C matrix file in sparse matrix format for the reference sample.
-
-* A BED file with region information for the reference Hi-C matrix.
-
-* A normalized Hi-C matrix file in sparse matrix format for the query sample.
-
-* A BED file with region information for the query Hi-C matrix.
+* The input contact matrices (and possibly region files) used for the `chess sim` run.
 
 * The path to the output directory.
 
@@ -412,4 +404,3 @@ The following parameters give you some control over the output:
 
 * Hug, Clemens B., Alexis G. Grimaldi, Kai Kruse, and Juan M. Vaquerizas. 2017. “Chromatin Architecture Emerges during Zygotic Genome Activation Independent of Transcription.” Cell 169 (2). Elsevier: 216–228.e19. doi:10.1016/j.cell.2017.03.024.
 * Rao, Suhas S.P., Miriam H. Huntley, Neva C. Durand, Elena K. Stamenova, Ivan D. Bochkov, James T. Robinson, Adrian L. Sanborn, et al. 2014. “A 3D Map of the Human Genome at Kilobase Resolution Reveals Principles of Chromatin Looping.” Cell 159 (7). Elsevier: 1665–80. doi:10.1016/j.cell.2014.11.021.
-* Servant, Nicolas, Nelle Varoquaux, Bryan R. Lajoie, Eric Viara, Chong-Jian Chen, Jean-Philippe Vert, Edith Heard, Job Dekker, and Emmanuel Barillot. 2015. “HiC-Pro: An Optimized and Flexible Pipeline for Hi-C Data Processing.” Genome Biology 16 (1). BioMed Central: 259. doi:10.1186/s13059-015-0831-x.
