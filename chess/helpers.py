@@ -555,12 +555,12 @@ def load_contacts(matrix_file, regions_file=None):
         regions = reference_loaded.regions
         region_trees = region_interval_trees(
             regions)
-    except ValueError:
+    except ValueError as initial_error:
+        print(initial_error)
         try:
-            assert regions_file is not None, """
-                Regions file needs to be
-                specified for sparse input.
-                """
+            assert regions_file is not None, (
+                "Regions file needs to be"
+                "specified for sparse input.")
             regions, _ix_converter, _ = load_regions(
                 regions_file)
             region_trees = region_interval_trees(
@@ -568,12 +568,8 @@ def load_contacts(matrix_file, regions_file=None):
             _, reference_oe = observed_expected(
                 regions_file, matrix_file)
             edges = edges_dict_from_sparse(reference_oe)
-        except AssertionError:
-            raise ValueError("""
-                Contact data could not be loaded.
-                Please specify a valid input file.
-                Files in sparse format can only be loaded if
-                --reference-regions is specified.""")
+        except AssertionError as error:
+            raise ValueError(error)
     return edges, region_trees, regions
 
 
