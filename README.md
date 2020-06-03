@@ -196,6 +196,10 @@ are mandatory to run `sim`:
 
 * The path to the output file.
 
+> NOTE: CHESS runs with Cooler input files can have significantly longer runtimes compared to
+> runs with Juicer or FAN-C inputs. This is because the two latter store precomputed
+> observed / expected values.
+
 > NOTE: Contact matrices in sparse format need to be accompanied by corresponding region files,
 > set with the `--reference-regions` and/or `--query-regions` flags. They should be in 
 > BED format, tab-delimited, where each row contains chromosome name, start,  and end coordinates
