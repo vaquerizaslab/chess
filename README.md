@@ -251,6 +251,11 @@ With an active background model, there are more columns in the output:
   a similarity of ssim or higher given the comparisons in the background model
   - in this case, all other regions in the query genome of the same window size
 
+> NOTE: CHESS p-values are not automatically corrected for multiple testing, 
+> as this is not necessary for all use cases.
+> If you are using CHESS to identify significantly similar or different regions across the genome with
+> a fixed acceptance threshold, the CHESS p-values need to be corrected for multiple testing.
+
 
 #### Optional arguments
 
