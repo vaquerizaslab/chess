@@ -22,13 +22,18 @@ class CleanCommand(Command):
         os.system('rm -vrf ./build ./dist ./*.pyc ./*.tgz ./*.egg-info ./htmlcov')
 
 
+def read_file(filename):
+    with open(os.path.join(os.path.dirname(__file__), filename)) as file:
+        return file.read()
+
+
 setup(
     name='chess-hic',
     version=__version__,
     description='Quantitative comparison and automatic feature extraction for chromatin contact data.',
-    # long_description_content_type="text/markdown",
+    long_description=read_file('README.md'),
+    long_description_content_type='text/markdown',
     url='https://github.com/vaquerizaslab/chess',
-    download_url='https://github.com/vaquerizaslab/chess/archive/v0.0.2.tar.gz',
     setup_requires=[
         'setuptools>=18.0',
     ],
