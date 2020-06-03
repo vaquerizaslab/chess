@@ -253,7 +253,8 @@ class Chess(object):
         try:
             reference_edges, reference_region_trees, reference_regions = loading_function(
                 reference_matrix_file, reference_regions_file)
-        except ValueError:
+        except ValueError as error:
+            logger.error(error)
             logger.error(
                 ("Reference contact data could not be loaded. "
                  "Please specify a valid input file. "
@@ -263,7 +264,8 @@ class Chess(object):
         try:
             query_edges, query_region_trees, query_regions = loading_function(
                 query_matrix_file, query_regions_file)
-        except ValueError:
+        except ValueError as error:
+            logger.error(error)
             logger.error(
                 ("Query contact data could not be loaded. "
                  "Please specify a valid input file. "
