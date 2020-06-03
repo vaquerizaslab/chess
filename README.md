@@ -67,20 +67,19 @@ Use `chess -h` for quick help and orientation.
 
 ### Finding changing regions between biological conditions in the same species
 
-The following will run a comparison of 250 kb submatrices of chromosome X in wildtype 
-_Drosophila melanogaster_ to a _zld_ knockdown (Hi-C data from Hug et al. 2017):
+The following will run a comparison of 1 Mb submatrices of chromosome X in wildtype 
+_Drosophila melanogaster_ to a _zld_ knockdown (Hi-C data from Hug et al. 2017),
+using Juicer input files at 25 kb resolution:
 
 ```bash
 chess sim \
-examples/Dmel_genome_scan/zld_X.sparse.gz \
-examples/Dmel_genome_scan/wt_X.sparse.gz \
-examples/Dmel_genome_scan/Dmel_zld_kd_wt_nc14_chrm_X_250kwindow_25kbstep.pairs.gz \
-examples/Dmel_genome_scan/comparison_results.tsv \
---reference-regions examples/Dmel_genome_scan/zld_X.regions.gz \
---query-regions examples/Dmel_genome_scan/wt_X.regions.gz
+examples/Dmel_genome_scan/juicer/zld.hic@25000 \
+examples/Dmel_genome_scan/juicer/wt.hic@25000 \
+examples/Dmel_genome_scan/dm6_pairs_X.bed \
+examples/Dmel_genome_scan/comparison_results.tsv
 ```
 
-> NOTE: This example run should finish within 2 minutes on a single core. 
+> NOTE: This example run should run less than one minutes on a single core. 
 > However, to speed it up, you can use the `-p <int>` flag to specify the 
 > number of cores to use (default: 1) and split the workload.
 
@@ -114,7 +113,7 @@ condition to the average ssim of a run between conditions.
 ### Comparing regions across species
 
 The following will run a comparison of 4 regions of varying sizes located on chromosome 
-19 in mouse and on chromosome 10 in human (Hi-C data from Rao et al. 2014):
+19 in mouse and on chromosome 10 in human (Hi-C data from Rao et al. 2014), using input files in sparse format:
 
 ```bash
 chess sim \
