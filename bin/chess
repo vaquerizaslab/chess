@@ -245,10 +245,10 @@ class Chess(object):
         output_file = args.out
         limit_background = args.limit_background
 
-        logger.debug('[MAIN]: Parameters:')
+        logger.debug('Parameters:')
         logger.debug(args)
 
-        logger.info('[MAIN]: Loading reference contact data')
+        logger.info('Loading reference contact data')
         loading_function = load_oe_contacts if is_oe else load_contacts
         try:
             reference_edges, reference_region_trees, reference_regions = loading_function(
@@ -273,7 +273,7 @@ class Chess(object):
                  "--query-regions is specified."))
             exit()
 
-        logger.info('[MAIN]: Loading region pairs')
+        logger.info('Loading region pairs')
         pairs, dropped = load_pairs_for_chroms(
             pairs_file,
             set().union(
@@ -354,7 +354,7 @@ class Chess(object):
 
             # background calculations
             else:
-                logger.info("[MAIN]: Running background calculations")
+                logger.info("Running background calculations")
                 if background_regions_file is not None:
                     background_regions_file = os.path.expanduser(background_regions_file)
                     background_regions, _, _ = load_regions(background_regions_file, ignore_ix=True)
@@ -958,10 +958,10 @@ class Chess(object):
         pairs_file = args.pairs
         output_file = args.out
 
-        logger.debug('[MAIN]: Parameters:')
+        logger.debug('Parameters:')
         logger.debug(args)
 
-        logger.info('[MAIN]: Loading reference contact data')
+        logger.info('Loading reference contact data')
         try:
             reference_edges, reference_region_trees, reference_regions = load_oe_contacts(
                 reference_matrix_file, reference_regions_file)
@@ -973,11 +973,11 @@ class Chess(object):
         except ValueError:
             logger.error('Failed to load the query data.')
 
-        logger.info('[MAIN]: Loading region pairs')
+        logger.info('Loading region pairs')
 
         pairs = list(load_pairs_iter(pairs_file))
         logger.info(
-            '[MAIN]: Applying image filtering to identify specific structures')
+            'Applying image filtering to identify specific structures')
         extract_structures(
             reference_edges,
             reference_region_trees,
@@ -988,7 +988,7 @@ class Chess(object):
             args.sigma_spatial,
             args.size_medianfilter,
             args.closing_square)
-        logger.info('[MAIN]: Results collected')
+        logger.info('Results collected')
 
     def crosscorrelate(self, argv):
         parser = MyParser(
