@@ -182,8 +182,6 @@ are mandatory to run `sim`:
 
 * A normalized Hi-C matrix file in one of the above formats for the query sample.
 
-* A BED file with region information for the query Hi-C matrix.
-
 * A BEDPE file (pairs) file that specifies which regions in the reference matrix should
   be compared to which regions in the query matrix. This should be a tab-delimited file
   with columns:
