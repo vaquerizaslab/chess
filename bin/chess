@@ -245,6 +245,11 @@ class Chess(object):
         output_file = args.out
         limit_background = args.limit_background
 
+        output_dir = os.path.dirname(output_file)
+        if not os.path.exists(output_dir):
+            logger.error("Specified output directory does not exist!")
+            raise RuntimeError("Specified output path not found.")
+
         logger.debug('Parameters:')
         logger.debug(args)
 
@@ -546,6 +551,12 @@ class Chess(object):
             help='''Produce window pairs only for the specified chromosome''')
 
         args = parser.parse_args(argv[2:])
+        output_file = args.output
+
+        output_dir = os.path.dirname(output_file)
+        if not os.path.exists(output_dir):
+            logger.error("Specified output directory does not exist!")
+            raise RuntimeError("Specified output path not found.")
 
         import pybedtools as pbt
 
@@ -660,6 +671,11 @@ class Chess(object):
         step = args.step
         output_file = args.output
         strand = args.strand
+
+        output_dir = os.path.dirname(output_file)
+        if not os.path.exists(output_dir):
+            logger.error("Specified output directory does not exist!")
+            raise RuntimeError("Specified output path not found.")
 
         if strand not in ['-', '+', None]:
             raise ValueError("--strand must be either - or +")
@@ -957,6 +973,11 @@ class Chess(object):
         query_regions_file = args.query_regions
         pairs_file = args.pairs
         output_file = args.out
+
+        output_dir = os.path.dirname(output_file)
+        if not os.path.exists(output_dir):
+            logger.error("Specified output directory does not exist!")
+            raise RuntimeError("Specified output path not found.")
 
         logger.debug('Parameters:')
         logger.debug(args)
