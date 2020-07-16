@@ -353,9 +353,11 @@ class Chess(object):
                         o.write("{}\t{}\t{}\t{}\n".format(pair_id, sn, ssim, z_ssim))
 
                 if nan_counter > 0:
-                    logger.info("Could not compute similarity for {} region pairs. "
-                                "This typically happens if the region size is too small "
-                                "(< 20 bins of the matrix)".format(nan_counter))
+                    logger.info(
+                        "Could not compute similarity for {} region pairs."
+                        "This can be due to faulty coordinates, too small"
+                        "region sizes or too many unmappable bins".format(
+                            nan_counter))
 
             # background calculations
             else:
