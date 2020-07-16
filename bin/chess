@@ -504,8 +504,7 @@ class Chess(object):
 
             Write all positions of a sliding window of specified
             size with specified step in the specified genome to the outfile
-            which can be directly used to run CHESS sim with the --genome-scan
-            option.
+            which can be directly used to run CHESS sim.
             ''',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
