@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Check whether output directories exist before running any computations.
+
 ## [0.3.0]
 
 ### Added
