@@ -62,3 +62,28 @@ or
   git clone https://github.com/vaquerizaslab/chess  # or download manually
   cd chess
   python setup.py install
+
+
+****************
+Example analysis
+****************
+
+CHESS has two typical use-cases, which are showcased in the publication (ADD LINK):
+
+1. Finding genomic regions with differences in their chromatin conformation between
+   two samples. This is useful for example for the identification of
+   disease driving changes.
+
+2. Comparing the chromatin conformation between two distinct regions in the same
+   or in different genomes. This is useful for example for quantifying the grade
+   of conservation of chromatin conformation in evolution.
+
+===========================================================
+Finding differences between samples of different conditions
+===========================================================
+
+
+
+=========================================
+Comparing regions between Mouse and Human
+=========================================
