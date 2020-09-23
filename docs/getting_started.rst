@@ -123,9 +123,21 @@ file in the examples folder.
 Running the search
 ------------------
 
-With all necessary input files prepared, running the search is a 
+With all necessary input files prepared, we can run the search with `chess sim`:
 
+.. code:: bash
 
+  chess sim \
+  examples/Dmel_genome_scan/juicer/zld.hic@25000 \
+  examples/Dmel_genome_scan/juicer/wt.hic@25000 \
+  ./dm6_2mb_win_100kb_step.bed \
+  ./dm6_2mb_win_100kb_step_chess_results.tsv
+
+  chess sim \
+  examples/Dmel_genome_scan/juicer/zld.hic@25000 \
+  examples/Dmel_genome_scan/juicer/wt.hic@25000 \
+  ./dm6_1mb_win_100kb_step.bed \
+  ./dm6_1mb_win_100kb_step_chess_results.tsv
 
 =========================================
 Comparing regions between Mouse and Human
