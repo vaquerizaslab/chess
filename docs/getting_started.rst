@@ -2,7 +2,7 @@
 Getting started
 ###############
 
-.. contents::
+.. toctree::
    :depth: 3
 
    Installation <installation>
