@@ -5,12 +5,7 @@ Getting started
 .. toctree::
    :depth: 3
 
+   Overview <overview>
    Installation <installation>
    Example analysis <example_analysis>
-
-********
-Overview
-********
-
-CHESS is a command line tool for the quantitative comparison and automatic feature extraction for chromatin contact data.
 
