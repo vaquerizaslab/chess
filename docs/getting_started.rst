@@ -104,7 +104,7 @@ Generating a pairs input file
 -----------------------------
 
 In this example analysis, we will search the entire X chromosome for differences.
-For this, we first need to generate the pairs file with the `chess pairs`
+For this, we first need to generate the pairs file with the ``chess pairs``
 subcommand.
 We will compare regions of 1 Mb and 2 Mb size with a step size of 100 kb.
 In addition, `chess pairs` needs to know the sizes of the chromosomes for which
@@ -123,7 +123,7 @@ file in the examples folder.
 Running the search
 ------------------
 
-With all necessary input files prepared, we can run the search with `chess sim`:
+With all necessary input files prepared, we can run the search with ``chess sim``:
 
 .. code:: bash
 

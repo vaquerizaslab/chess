@@ -10,6 +10,7 @@ Welcome to chess-hic's documentation!
    :maxdepth: 3
 
    Getting started with chess-hic <getting_started>
+   The chess-hic command line tool <cli>
 
 
 
