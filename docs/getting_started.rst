@@ -3,7 +3,7 @@ Getting started
 ###############
 
 .. toctree::
-   :depth: 3
+   :maxdepth: 3
 
    Overview <overview>
    Installation <installation>
