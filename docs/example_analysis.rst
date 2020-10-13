@@ -73,6 +73,12 @@ With all necessary input files prepared, we can run the search with ``chess sim`
   ./dm6_1mb_win_100kb_step.bed \
   ./dm6_1mb_win_100kb_step_chess_results.tsv
 
+The output data are stored in the 
+./dm6_1mb_win_100kb_step_chess_results.tsv
+and 
+./dm6_2mb_win_100kb_step_chess_results.tsv
+files.
+
 =========================================
 Comparing regions between Mouse and Human
 =========================================
