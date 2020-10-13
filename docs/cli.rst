@@ -16,6 +16,6 @@ between two samples.
 
 .. argparse::
    :module: chess.commands
-   :func: pair_parser
+   :func: pairs_parser
    :prog: chess
 
