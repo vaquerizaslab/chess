@@ -4,6 +4,8 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -13,6 +15,13 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
+import mock
+MOCK_MODULES = [
+    'numpy', 'scipy', 'matplotlib', 'matplotlib.pyplot',
+    'scipy.interpolate', 'intervaltree'
+]
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
 import chess
 
 # -- Project information -----------------------------------------------------
