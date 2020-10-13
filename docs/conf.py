@@ -20,7 +20,7 @@ MOCK_MODULES = [
     'skimage.metrics', 'numpy.lib.stride_tricks', 'numpy.lib',
     'skimage.morphology', 'skimage.filters', 'skimage.measure',
     'scipy.ndimage', 'scipy.signal.signaltools', 'sklearn.preprocessing',
-    'sklearn.cluster'
+    'sklearn.cluster', 'pandas'
 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
