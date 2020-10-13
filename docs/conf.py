@@ -14,6 +14,7 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
+import chess
 
 # -- Project information -----------------------------------------------------
 
@@ -22,7 +23,7 @@ copyright = '2020, Silvia Galan, Nick Machnik, Kai Kruse'
 author = 'Silvia Galan, Nick Machnik, Kai Kruse'
 
 # The full version, including alpha/beta/rc tags
-release = '0.3.0'
+release = chess.__version__
 
 
 # -- General configuration ---------------------------------------------------
@@ -31,6 +32,12 @@ release = '0.3.0'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.todo',
+    'sphinx.ext.imgmath',
+    'sphinx.ext.napoleon',
+    'sphinxarg.ext',
+    'sphinx.ext.autosummary',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
