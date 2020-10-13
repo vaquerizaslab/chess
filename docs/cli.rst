@@ -18,4 +18,6 @@ between two samples.
    :module: chess.commands
    :func: pairs_parser
    :prog: chess
+   :nodescription:
+   
 
