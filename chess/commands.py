@@ -215,8 +215,8 @@ def oe_parser():
     parser.add_argument(
         'regions',
         type=str,
-        help='''BED file (no header) with regions corresponding to
-                the number of rows in the provided reference matrix.''')
+        help='BED file (no header) with regions corresponding to '
+             'the number of rows in the provided reference matrix.')
 
     parser.add_argument(
         'output_matrix',
@@ -229,25 +229,20 @@ def oe_parser():
 
 def pairs_parser():
     parser = MyParser(
-        description='''
-        Make window pairs for CHESS genome scan.
-
-        Write all positions of a sliding window of specified
-        size with specified step in the specified genome to the outfile
-        which can be directly used to run CHESS sim.
-        ''',
+        description='Make window pairs for CHESS genome scan. '
+                    'Write all positions of a sliding window of specified '
+                    'size with specified step in the specified genome to '
+                    'the outfile which can be directly used to run CHESS sim.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument(
         'genome',
         type=str,
-        help='''
-        UCSC genome identifier (as recognized by pybedtools),
-        or path to tab-separated chrom sizes file with columns
-        <chromosome name> <chromosome size>.
-        Will use the path only if no USCS entry with that name is found,
-        or --file-input is specified
-        ''')
+        help='UCSC genome identifier (as recognized by pybedtools), '
+             'or path to tab-separated chrom sizes file with columns '
+             '<chromosome name> <chromosome size>. '
+             'Will use the path only if no USCS entry with that name is found'
+             ', or --file-input is specified.')
 
     parser.add_argument(
         'window',
@@ -268,34 +263,32 @@ def pairs_parser():
         '--file-input',
         action='store_true',
         default=False,
-        help='''
-        Will not check for USCS entry of genome input with pybedtools if set'''
+        help='Will not check for USCS entry of genome'
+             'input with pybedtools if set'
         )
 
     parser.add_argument(
         '--chromosome',
         type=str,
-        help='''Produce window pairs only for the specified chromosome''')
+        help='Produce window pairs only for the specified chromosome')
 
     return parser
 
 
 def background_parser():
     parser = MyParser(
-        description='''
-        Generate BED file with regions to be used in CHESS background calculations.
-        ''',
+        description='Generate BED file with regions to be used'
+                    'in CHESS background calculations.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument(
         'genome_or_region',
         type=str,
-        help='''UCSC genome identifier (as recognized by pybedtools),
-                OR path to tab-separated chrom sizes file with columns
-                <chromosome name> <chromosome size> OR region identifier in
-                the format <chromosome>:<start>-<end>.
-                Will try options int he order listed.
-             ''')
+        help='UCSC genome identifier (as recognized by pybedtools), '
+             'OR path to tab-separated chrom sizes file with columns '
+             '<chromosome name> <chromosome size> OR region identifier in '
+             'the format <chromosome>:<start>-<end>. '
+             'Will try options in the order listed.')
 
     parser.add_argument(
         'window',
