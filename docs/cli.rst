@@ -14,4 +14,8 @@ by ``chess sim`` if its intended use is to search a whole genome or a number
 of chromosomes for regions with differences in their chromatin conformation
 between two samples.
 
+.. argparse::
+   :module: chess.commands
+   :func: pair_parser
+   :prog: chess
 
