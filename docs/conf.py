@@ -10,10 +10,10 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
-import sys
-sys.path.insert(0, os.path.abspath('..'))
-import chess
+# import os
+# import sys
+# sys.path.insert(0, os.path.abspath('..'))
+# import chess
 
 # -- Project information -----------------------------------------------------
 
@@ -22,7 +22,8 @@ copyright = '2020, Silvia Galan, Nick Machnik, Kai Kruse'
 author = 'Silvia Galan, Nick Machnik, Kai Kruse'
 
 # The full version, including alpha/beta/rc tags
-release = chess.__version__
+# release = chess.__version__
+release = "0.3.0"
 
 
 # -- General configuration ---------------------------------------------------
