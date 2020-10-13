@@ -17,7 +17,8 @@ import mock
 MOCK_MODULES = [
     'numpy', 'scipy', 'matplotlib', 'matplotlib.pyplot',
     'scipy.interpolate', 'intervaltree', 'skimage', 'skimage.transform',
-    'skimage.metrics', 'numpy.lib.stride_tricks', 'numpy.lib'
+    'skimage.metrics', 'numpy.lib.stride_tricks', 'numpy.lib',
+    'skimage.morphology'
 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
