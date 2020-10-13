@@ -229,7 +229,8 @@ def oe_parser():
 
 def pairs_parser():
     parser = MyParser(
-        description='''Make window pairs for CHESS genome scan.
+        description='''
+        Make window pairs for CHESS genome scan.
 
         Write all positions of a sliding window of specified
         size with specified step in the specified genome to the outfile
@@ -240,7 +241,8 @@ def pairs_parser():
     parser.add_argument(
         'genome',
         type=str,
-        help='''UCSC genome identifier (as recognized by pybedtools),
+        help='''
+        UCSC genome identifier (as recognized by pybedtools),
         or path to tab-separated chrom sizes file with columns
         <chromosome name> <chromosome size>.
         Will use the path only if no USCS entry with that name is found,
@@ -266,8 +268,9 @@ def pairs_parser():
         '--file-input',
         action='store_true',
         default=False,
-        help='''Will not check for USCS entry of genome input
-        with pybedtools if set''')
+        help='''
+        Will not check for USCS entry of genome input with pybedtools if set'''
+        )
 
     parser.add_argument(
         '--chromosome',
