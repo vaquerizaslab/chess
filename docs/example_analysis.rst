@@ -17,7 +17,11 @@ Finding differences between samples of different conditions
 ===========================================================
 
 This example illustrates how CHESS can help to identify genomic regions
-that differ in their chromatin conformation between two samples. 
+that differ in their chromatin conformation between two samples, by the
+example of samples from a `DLBCL <https://en.wikipedia.org/wiki/Diffuse_large_B-cell_lymphoma>`
+patient and a control person. The analysis of these data is also showcased in
+the `chess paper <SOME LINK>`, Figure 5.
+
 For this analysis, we will need only three input files for CHESS:
 
 1. The Hi-C data for the first sample
