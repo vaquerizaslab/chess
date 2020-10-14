@@ -42,8 +42,8 @@ Generating a pairs input file
 -----------------------------
 
 In this example analysis, we will search the entire chromosome 2 for differences.
-For this, we first need to generate the pairs file with the :ref:`chess-pairs`.
-subcommand.
+For this, we first need to generate the pairs file with the
+:ref:`chess pairs <chess-pairs>` subcommand.
 We will compare regions of 2 Mb size with a step size of 100 kb.
 In addition, `chess pairs` needs to know the sizes of the chromosomes for which
 we want to generate the pairs. Here we supply these with the chrom.sizes.tsv

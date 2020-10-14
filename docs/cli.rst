@@ -7,6 +7,7 @@ The chess-hic command line tool
 
 
 .. _chess-pairs:
+
 ***************
 ``chess pairs``
 ***************
