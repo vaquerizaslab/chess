@@ -38,6 +38,12 @@ If we want to scan a whole chromosome or genome for differences,
 we can use the :ref:`chess pairs <chess-pairs>` subcommand to generate the
 3. input file.
 
+To follow along with the example analysis, first move to the data location:
+
+.. code:: bash
+
+  cd examples/dlbcl
+
 -----------------------------
 Generating a pairs input file
 -----------------------------
