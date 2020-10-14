@@ -64,7 +64,8 @@ we want to generate the pairs. Here we supply 'hg38' as an genome identifier:
 Running the search
 ------------------
 
-With all necessary input files prepared, we can run the search with ``chess sim``:
+With all necessary input files prepared, we can run the search with
+the :ref:`chess sim <chess-sim>` subcommand:
 
 .. code:: bash
 

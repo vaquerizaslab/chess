@@ -22,5 +22,18 @@ between two samples.
    :func: pairs_parser
    :prog: chess
    :nodescription:
-   
+  
+.. _chess-sim:
 
+***************
+``chess sim``
+***************
+
+This command runs the comparisons between two sets of chromatin contact data.
+
+.. argparse::
+   :module: chess.commands
+   :func: sim_parser
+   :prog: chess
+   :nodescription:
+   
