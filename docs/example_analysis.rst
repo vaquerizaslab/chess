@@ -35,7 +35,8 @@ For this analysis, we will need only three input files for CHESS:
 format.
 
 If we want to scan a whole chromosome or genome for differences,
-we can use the `chess pairs` subcommand to generate the 3. input file.
+we can use the :ref:`chess pairs <chess-pairs>` subcommand to generate the
+3. input file.
 
 -----------------------------
 Generating a pairs input file
@@ -45,9 +46,8 @@ In this example analysis, we will search the entire chromosome 2 for differences
 For this, we first need to generate the pairs file with the
 :ref:`chess pairs <chess-pairs>` subcommand.
 We will compare regions of 2 Mb size with a step size of 100 kb.
-In addition, `chess pairs` needs to know the sizes of the chromosomes for which
-we want to generate the pairs. Here we supply these with the chrom.sizes.tsv
-file in the examples folder.
+In addition, ``chess pairs`` needs to know the sizes of the chromosomes for which
+we want to generate the pairs. Here we supply 'hg38' as an genome identifier:
 
 .. code:: bash
 
@@ -63,22 +63,45 @@ With all necessary input files prepared, we can run the search with ``chess sim`
 .. code:: bash
 
   chess sim \
-  examples/Dmel_genome_scan/juicer/zld.hic@25000 \
-  examples/Dmel_genome_scan/juicer/wt.hic@25000 \
-  ./dm6_2mb_win_100kb_step.bed \
-  ./dm6_2mb_win_100kb_step_chess_results.tsv
+  ukm_control_fixed_le_25kb_chr2.hic \
+  ukm_patient_fixed_le_25kb_chr2.hic \
+  hg38_chr2_2mb_win_100kb_step.bed \
+  ukm_chr2_2mb_control_vs_patient_chess_results.tsv
 
-  chess sim \
-  examples/Dmel_genome_scan/juicer/zld.hic@25000 \
-  examples/Dmel_genome_scan/juicer/wt.hic@25000 \
-  ./dm6_1mb_win_100kb_step.bed \
-  ./dm6_1mb_win_100kb_step_chess_results.tsv
+The output data are stored in the
+ukm_chr2_2mb_control_vs_patient_chess_results.tsv file.
 
-The output data are stored in the 
-./dm6_1mb_win_100kb_step_chess_results.tsv
-and 
-./dm6_2mb_win_100kb_step_chess_results.tsv
-files.
+----------------------
+Choosing a window size
+----------------------
+
+In this analysis, we compared windows of 2 Mb size between our samples.
+In general, choosing a different window size should be correlated,
+with large windows simply averaging over the effects observed in smaller
+windows. If we repeat the analysis above for 1 Mb and 4 Mb windows, and compare
+the results by the window midpoints, we get the following relationships:
+
+.. figure:: plots/ws_corr.png
+   :name: ws-corr
+
+.. figure:: plots/ws_track_corr.png
+   :name: ws-track-corr
+
+Despite the correlation, different window sizes can yield different results
+in some regions:
+
+* Larger windows cover more and longer long-range interactions;
+  - If you are interested in changes of large effects stretching over 
+    long genomic distances, choose a larger window size.
+  - However, long-range interactions tend to be more noisy.
+    The larger the window size, the smaller the number of regions that will
+    pass a given signal-to-noise threshold. If your analysis does not return
+    any regions of strong dissimilarity above your signal-to-noise threshold,
+    lower the threshold or try a smaller window size.
+* The larger the window, the smaller the effect of small changes;
+  - If you are interested in finding changes in single TAD boundaries, 
+    choose a small window. Large windows will cover multiple boundaries 
+    and the score of the window will reflect their combined change.
 
 =========================================
 Comparing regions between Mouse and Human
