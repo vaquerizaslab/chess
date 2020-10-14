@@ -85,7 +85,9 @@ Inspecting the results
 To inspect which regions show differences between the two samples,
 it is useful to first inspect the similarity index along the compared
 chromosome. Aside from the calculated similarity index, the signal-to-noise
-ratio is important. One way to display this information together is this:
+ratio is important. One way to display this information together is this
+(please check out the jupyter notebook at `examples/dlbcl/example_analysis.ipynb`
+for the code to generate these plots):
 
 .. figure:: plots/chr2_2mb_results_track.png
    :name: result-track
