@@ -5,6 +5,8 @@ The chess-hic command line tool
 .. contents::
    :depth: 3
 
+
+.. _chess-pairs:
 ***************
 ``chess pairs``
 ***************

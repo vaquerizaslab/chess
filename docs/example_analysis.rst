@@ -41,21 +41,18 @@ we can use the `chess pairs` subcommand to generate the 3. input file.
 Generating a pairs input file
 -----------------------------
 
-In this example analysis, we will search the entire X chromosome for differences.
-For this, we first need to generate the pairs file with the ``chess pairs``
+In this example analysis, we will search the entire chromosome 2 for differences.
+For this, we first need to generate the pairs file with the :ref:`chess-pairs`.
 subcommand.
-We will compare regions of 1 Mb and 2 Mb size with a step size of 100 kb.
+We will compare regions of 2 Mb size with a step size of 100 kb.
 In addition, `chess pairs` needs to know the sizes of the chromosomes for which
 we want to generate the pairs. Here we supply these with the chrom.sizes.tsv
 file in the examples folder.
 
 .. code:: bash
 
-  chess pairs examples/Dmel_genome_scan/dm6.chrom.sizes.tsv 2000000 100000 \
-  ./dm6_2mb_win_100kb_step.bed --chromosome X --file-input
-
-  chess pairs examples/Dmel_genome_scan/dm6.chrom.sizes.tsv 1000000 100000 \
-  ./dm6_1mb_win_100kb_step.bed --chromosome X --file-input
+  chess pairs hg38 2000000 100000 \
+  ./hg38_chr2_2mb_win_100kb_step.bed --chromosome chr2
 
 ------------------
 Running the search
