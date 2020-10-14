@@ -72,6 +72,26 @@ The output data are stored in the
 ukm_chr2_2mb_control_vs_patient_chess_results.tsv file.
 
 ----------------------
+Inspecting the results
+----------------------
+
+To inspect which regions show differences between the two samples,
+it is useful to first inspect the similarity index along the compared
+chromosome. Aside from the calculated similarity index, the signal-to-noise
+ratio is important. One way to display this information together is this:
+
+.. figure:: plots/chr2_2mb_results_track.png
+   :name: result-track
+
+Here we display only regions with a signal-to-noise ration > 0.6 as colored
+dots, the rest is gray. The most interesting regions are highlighted by
+deep dips with above threshold signal-to-noise ratios, for example the
+region around 148 Mb:
+
+.. figure:: plots/chr2_148mb_example_region.png
+   :name: result-region
+
+----------------------
 Choosing a window size
 ----------------------
 
