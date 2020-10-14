@@ -3,7 +3,7 @@ The chess-hic command line tool
 ###############################
 
 .. contents::
-   :depth: 3
+   :depth: 1
 
 
 .. _chess-pairs:
