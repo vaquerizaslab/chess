@@ -103,7 +103,9 @@ class Chess(object):
         limit_background = args.limit_background
 
         output_dir = os.path.dirname(output_file)
-        if not os.path.exists(output_dir):
+        if output_dir == '':
+            output_file = os.path.join('.', output_file)
+        elif not os.path.exists(output_dir):
             logger.error("Specified output directory does not exist!")
             raise RuntimeError("Specified output path not found.")
 
@@ -346,7 +348,9 @@ class Chess(object):
         output_file = args.output
 
         output_dir = os.path.dirname(output_file)
-        if not os.path.exists(output_dir):
+        if output_dir == '':
+            output_file = os.path.join('.', output_file)
+        elif not os.path.exists(output_dir):
             logger.error("Specified output directory does not exist!")
             raise RuntimeError("Specified output path not found.")
 
@@ -430,7 +434,9 @@ class Chess(object):
         strand = args.strand
 
         output_dir = os.path.dirname(output_file)
-        if not os.path.exists(output_dir):
+        if output_dir == '':
+            output_file = os.path.join('.', output_file)
+        elif not os.path.exists(output_dir):
             logger.error("Specified output directory does not exist!")
             raise RuntimeError("Specified output path not found.")
 
@@ -560,7 +566,9 @@ class Chess(object):
         output_file = args.out
 
         output_dir = os.path.dirname(output_file)
-        if not os.path.exists(output_dir):
+        if output_dir == '':
+            output_file = os.path.join('.', output_file)
+        elif not os.path.exists(output_dir):
             logger.error("Specified output directory does not exist!")
             raise RuntimeError("Specified output path not found.")
 
