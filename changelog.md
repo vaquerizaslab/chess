@@ -6,8 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.3.1]
+
 ### Added
 - Check whether output directories exist before running any computations.
+- Allow paths to output files without basenames.
 
 ## [0.3.0]
 
