@@ -28,9 +28,10 @@ def correlate2d(file, output_folder, pairs):
 
     with open(file, 'r') as r:
         for line in r:
-            region, position, height, width = line.split(',')[:4]
+            region, position, x_min, x_max, y_min, y_max = line.split(',')[:6]
             pair_id = pairs_dict[int(region)]
-            line_float = [float(x) for x in line.split(',')[4:]]
+            line_float = [float(x) for x in line.split(',')[6:]]
+            height, width = int(y_max) - int(y_min), int(x_max) - int(x_min)
             mat = np.asanyarray(line_float).reshape(int(height), int(width))
             all_arrays[int(position)].append(mat)
             information_regions[int(position)].append((pair_id, int(position)))
