@@ -66,11 +66,12 @@ def get_info_feature(labels, submatrix, outfile, position, area, reg):
             x_min, x_max = np.min(bx), np.max(bx)
             submat = submatrix[y_min:y_max, x_min:x_max]
             flat_mat = list(submat.flatten())
-            height, width = y_max - y_min, x_max - x_min
             flat_mat.insert(0, reg)
             flat_mat.insert(1, position)
-            flat_mat.insert(2, height)
-            flat_mat.insert(3, width)
+            flat_mat.insert(2, x_min)
+            flat_mat.insert(3, x_max)
+            flat_mat.insert(4, y_min)
+            flat_mat.insert(5, y_max)
             outfile.write(','.join(map(str, flat_mat)) + '\n')
             position += 1
     return position
@@ -134,8 +135,10 @@ def extract_structures(
             bins=size,
             multichannel=False)
         # smooth
-        filter_positive = ndi.median_filter(denoise_positive, size_medianfilter)
-        filter_negative = ndi.median_filter(denoise_negative, size_medianfilter)
+        filter_positive = ndi.median_filter(
+            denoise_positive, size_medianfilter)
+        filter_negative = ndi.median_filter(
+            denoise_negative, size_medianfilter)
 
         # binarise
         if np.all(filter_positive == 0.):
