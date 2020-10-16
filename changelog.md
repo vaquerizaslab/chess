@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Do output directory checks in chess extract and chess crosscorrelate
+
+### Removed
+- chess filter
+
 ## [0.3.1]
 
 ### Added

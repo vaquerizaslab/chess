@@ -22,6 +22,7 @@ between two samples.
    :func: pairs_parser
    :prog: chess
    :nodescription:
+
   
 .. _chess-sim:
 
@@ -36,4 +37,23 @@ This command runs the comparisons between two sets of chromatin contact data.
    :func: sim_parser
    :prog: chess
    :nodescription:
+
    
+.. _chess-extract
+
+***************
+``chess extract``
+***************
+
+This command extracts features from a set of input regions.
+
+Please note that the input parameters have to be fine tuned depending on the
+size of the analyzed regions and the target features.
+For now, some experimentation by the user is required, but we are planning to 
+release a guide to this in the future.
+
+.. argparse::
+   :module: chess.commands
+   :func: extract_parser
+   :prog: chess
+   :nodescription:

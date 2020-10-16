@@ -44,6 +44,8 @@ To follow along with the example analysis, first move to the data location:
 
   cd examples/dlbcl
 
+
+
 -----------------------------
 Generating a pairs input file
 -----------------------------
@@ -51,14 +53,14 @@ Generating a pairs input file
 In this example analysis, we will search the entire chromosome 2 for differences.
 For this, we first need to generate the pairs file with the
 :ref:`chess pairs <chess-pairs>` subcommand.
-We will compare regions of 2 Mb size with a step size of 100 kb.
+We will compare regions of 6 Mb size with a step size of 100 kb.
 In addition, ``chess pairs`` needs to know the sizes of the chromosomes for which
 we want to generate the pairs. Here we supply 'hg38' as an genome identifier:
 
 .. code:: bash
 
-  chess pairs hg38 2000000 100000 \
-  ./hg38_chr2_2mb_win_100kb_step.bed --chromosome chr2
+  chess pairs hg38 6000000 100000 \
+  ./hg38_chr2_6mb_win_100kb_step.bed --chromosome chr2
 
 ------------------
 Running the search
@@ -72,11 +74,11 @@ the :ref:`chess sim <chess-sim>` subcommand:
   chess sim \
   ukm_control_fixed_le_25kb_chr2.hic \
   ukm_patient_fixed_le_25kb_chr2.hic \
-  hg38_chr2_2mb_win_100kb_step.bed \
-  ukm_chr2_2mb_control_vs_patient_chess_results.tsv
+  hg38_chr2_6mb_win_100kb_step.bed \
+  ukm_chr2_6mb_control_vs_patient_chess_results.tsv
 
 The output data are stored in the
-ukm_chr2_2mb_control_vs_patient_chess_results.tsv file.
+ukm_chr2_6mb_control_vs_patient_chess_results.tsv file.
 
 ----------------------
 Inspecting the results
@@ -87,34 +89,66 @@ it is useful to first inspect the similarity index along the compared
 chromosome. Aside from the calculated similarity index, the signal-to-noise
 ratio is important. One way to display this information together is this
 (please check out the jupyter notebook at `examples/dlbcl/example_analysis.ipynb`
-for the code to generate these plots):
+for the code to generate these plots and subset data):
 
-.. figure:: plots/chr2_2mb_results_track.png
+.. figure:: plots/chr2_3mb_results_track.png
    :name: result-track
 
-Here we display only regions with a signal-to-noise ration > 0.6 as colored
-dots, the rest is gray. The most interesting regions are highlighted by
+Here we display only regions with a signal-to-noise ration > 0.5 and a
+z-normalised similarity score < -1 as colored dots, the rest is gray.
+The most interesting regions are highlighted by
 deep dips with above threshold signal-to-noise ratios, for example the
 region around 148 Mb:
 
-.. figure:: plots/chr2_148mb_example_region.png
+.. figure:: plots/chr2_example_region.png
    :name: result-region
+
+-------------------
+Extracting features
+-------------------
+
+We now might want to highlight the features in these regions that show
+particularly strong differences. This can be done with the
+:ref:`chess extract <chess-extract>` command. To use it, we first need to decide
+on a subset of regions that contain strong differences, e.g. by filtering with
+the signal-to-noise > 0.5 and z-ssim < -1 cutoffs used above (see the jupyter
+notebook for subsetting code). We then prepare an output directory
+
+.. code:: bash
+
+  mkdir features
+
+
+and then run :ref:`chess extract <chess-extract>`:
+
+  .. code:: bash
+
+  chess extract \
+  filtered_regions_chr2_3mb_100kb.tsv \
+  ukm_control_fixed_le_25kb_chr2.hic \
+  ukm_patient_fixed_le_25kb_chr2.hic \
+  ./features
+
+We are here using the command with default parameters. 
+Please note that the input parameters have to be fine tuned depending on the
+size of the analyzed regions and the target features.
+For now, some experimentation by the user is required, but we are planning to 
+release a guide to this in the future.
+
+In our example region, the following parts are marked by the extraction
+algorithm in default mode, marking the differential TAD structures:
+
+.. figure:: plots/chr2_example_region_with_features.png
+   :name: result-region-features
 
 ----------------------
 Choosing a window size
 ----------------------
 
-In this analysis, we compared windows of 2 Mb size between our samples.
+In this analysis, we compared windows of 6 Mb size between our samples.
 In general, choosing a different window size should be correlated,
 with large windows simply averaging over the effects observed in smaller
-windows. If we repeat the analysis above for 1 Mb and 4 Mb windows, and compare
-the results by the window midpoints, we get the following relationships:
-
-.. figure:: plots/ws_corr.png
-   :name: ws-corr
-
-.. figure:: plots/ws_track_corr.png
-   :name: ws-track-corr
+windows.
 
 Despite the correlation, different window sizes can yield different results
 in some regions:

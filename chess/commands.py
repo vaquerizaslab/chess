@@ -381,7 +381,8 @@ def extract_parser():
         type=int,
         default=9,
         help='Windows size used to scan and smooth the contained bins. '
-             'Larger values will smooth larger structures.')
+             'Higher values will smooth larger figures, '
+             'while smaller values will consider subtle signals (i.e. loops).')
 
     parser.add_argument(
         '--closing-square', dest="closing_square",
