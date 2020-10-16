@@ -41,9 +41,9 @@ This command runs the comparisons between two sets of chromatin contact data.
    
 .. _chess-extract
 
-***************
+*****************
 ``chess extract``
-***************
+*****************
 
 This command extracts features from a set of input regions.
 
@@ -55,5 +55,20 @@ release a guide to this in the future.
 .. argparse::
    :module: chess.commands
    :func: extract_parser
+   :prog: chess
+   :nodescription:
+
+
+.. _chess-crosscorrelate
+
+************************
+``chess crosscorrelate``
+************************
+
+This command clusters extracted features by their topology.
+
+.. argparse::
+   :module: chess.commands
+   :func: crosscorrelate_parser
    :prog: chess
    :nodescription:
