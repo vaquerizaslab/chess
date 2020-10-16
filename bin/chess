@@ -523,7 +523,7 @@ class Chess(object):
             reference_region_trees,
             query_edges,
             query_region_trees,
-            pairs, output_file,
+            pairs, output_dir,
             args.windowsize,
             args.sigma_spatial,
             args.size_medianfilter,
