@@ -487,19 +487,16 @@ class Chess(object):
 
         from chess.get_structures import extract_structures
 
+        output_dir = args.out
+        if not os.path.exists(output_dir):
+            logger.error("Specified output directory does not exist!")
+            raise RuntimeError("Specified output path not found.")
+
         reference_regions_file = args.reference_regions
         reference_matrix_file = args.reference_contacts
         query_matrix_file = args.query_contacts
         query_regions_file = args.query_regions
         pairs_file = args.pairs
-        output_file = args.out
-
-        output_dir = os.path.dirname(output_file)
-        if output_dir == '':
-            output_file = os.path.join('.', output_file)
-        elif not os.path.exists(output_dir):
-            logger.error("Specified output directory does not exist!")
-            raise RuntimeError("Specified output path not found.")
 
         logger.debug('Parameters:')
         logger.debug(args)
