@@ -121,7 +121,7 @@ notebook for subsetting code). We then prepare an output directory
 
 and then run :ref:`chess extract <chess-extract>`:
 
-  .. code:: bash
+.. code:: bash
 
   chess extract \
   filtered_regions_chr2_3mb_100kb.tsv \
