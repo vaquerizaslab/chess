@@ -141,11 +141,35 @@ algorithm in default mode, marking the differential TAD structures:
 .. figure:: plots/chr2_example_region_with_features.png
    :name: result-region-features
 
+--------------------
+Classifying features
+--------------------
+
+Finally, we can gain more information about the kind of features that we
+extracted in the previous step by grouping them by similarity of their
+topology. This can be done with the
+:ref:`chess crosscorrelate <chess-crosscorrelate>` command, which we can simply
+apply to the result files of the previous step. E.g. to classify the gained
+features, we run
+
+.. code:: bash
+
+  chess crosscorrelate \
+  features/gained_features.tsv \
+  filtered_regions_chr2_3mb_1mb.tsv \
+  ./features/
+
+We obtain ./features/subregions_2_clusters_gained.tsv, where the 2 corresponds
+to the 2 clusters identified in this analysis. The results file has three columns:
+the cluster number, the region id and the feature id. Using the feature id
+column, each feature in the input file (features/gained_features.tsv) can be
+mapped to its class.
+
 ----------------------
 Choosing a window size
 ----------------------
 
-In this analysis, we compared windows of 6 Mb size between our samples.
+In this analysis, we compared windows of 3 Mb size between our samples.
 In general, choosing a different window size should be correlated,
 with large windows simply averaging over the effects observed in smaller
 windows.
@@ -165,7 +189,3 @@ in some regions:
   - If you are interested in finding changes in single TAD boundaries, 
     choose a small window. Large windows will cover multiple boundaries 
     and the score of the window will reflect their combined change.
-
-=========================================
-Comparing regions between Mouse and Human
-=========================================
