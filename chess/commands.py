@@ -302,45 +302,6 @@ def background_parser():
     return parser
 
 
-def filter_parser():
-    parser = MyParser(
-        description='Generate BED file with regions to be used in '
-                    'CHESS background calculations.',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-
-    parser.add_argument(
-        'genome_or_region',
-        type=str,
-        help='UCSC genome identifier (as recognized by pybedtools), '
-             'OR path to tab-separated chrom sizes file with columns '
-             '<chromosome name> <chromosome size> OR region identifier in '
-             'the format <chromosome>:<start>-<end>. '
-             'Will try options int he order listed.')
-
-    parser.add_argument(
-        'window',
-        type=int,
-        help='Window size in base pairs')
-
-    parser.add_argument(
-        'step',
-        type=int,
-        help='Step size in base pairs')
-
-    parser.add_argument(
-        'output',
-        type=str,
-        help='Path to output file')
-
-    parser.add_argument(
-        '--strand',
-        type=str,
-        help='[+/-] .Generate regions on this strand only. '
-             'Default: both strands')
-
-    return parser
-
-
 def extract_parser():
     parser = MyParser(
         description='Extract the specific regions that are different '
