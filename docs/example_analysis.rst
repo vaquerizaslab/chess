@@ -44,8 +44,6 @@ To follow along with the example analysis, first move to the data location:
 
   cd examples/dlbcl
 
-
-
 -----------------------------
 Generating a pairs input file
 -----------------------------
@@ -117,7 +115,6 @@ notebook for subsetting code). We then prepare an output directory
 .. code:: bash
 
   mkdir features
-
 
 and then run :ref:`chess extract <chess-extract>`:
 
