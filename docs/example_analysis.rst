@@ -51,14 +51,14 @@ Generating a pairs input file
 In this example analysis, we will search the entire chromosome 2 for differences.
 For this, we first need to generate the pairs file with the
 :ref:`chess pairs <chess-pairs>` subcommand.
-We will compare regions of 6 Mb size with a step size of 100 kb.
+We will compare regions of 3 Mb size with a step size of 100 kb.
 In addition, ``chess pairs`` needs to know the sizes of the chromosomes for which
 we want to generate the pairs. Here we supply 'hg38' as an genome identifier:
 
 .. code:: bash
 
-  chess pairs hg38 6000000 100000 \
-  ./hg38_chr2_6mb_win_100kb_step.bed --chromosome chr2
+  chess pairs hg38 3000000 100000 \
+  ./hg38_chr2_3mb_win_100kb_step.bed --chromosome chr2
 
 ------------------
 Running the search
@@ -72,11 +72,11 @@ the :ref:`chess sim <chess-sim>` subcommand:
   chess sim \
   ukm_control_fixed_le_25kb_chr2.hic \
   ukm_patient_fixed_le_25kb_chr2.hic \
-  hg38_chr2_6mb_win_100kb_step.bed \
-  ukm_chr2_6mb_control_vs_patient_chess_results.tsv
+  hg38_chr2_3mb_win_100kb_step.bed \
+  ukm_chr2_3mb_control_vs_patient_chess_results.tsv
 
 The output data are stored in the
-ukm_chr2_6mb_control_vs_patient_chess_results.tsv file.
+ukm_chr2_3mb_control_vs_patient_chess_results.tsv file.
 
 ----------------------
 Inspecting the results
