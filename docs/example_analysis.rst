@@ -30,6 +30,7 @@ For this analysis, we will need only three input files for CHESS:
 
 1. and 2. can be in `Juicer <https://github.com/aidenlab/juicer>`_,
 `Cooler <https://github.com/mirnylab/cooler>`_ or `FANC <https://github.com/vaquerizaslab/fanc>`_ format.
+However, we advice to use Juicer of FANC files for performance reasons.
 
 3. should be supplied in `BEDPE <https://bedtools.readthedocs.io/en/latest/content/general-usage.html#bedpe-format>`_
 format.
