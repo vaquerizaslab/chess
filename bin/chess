@@ -57,12 +57,6 @@ class Chess(object):
             fh.setLevel(log_level)
             logger.addHandler(fh)
 
-        # get version info
-        if args.print_version:
-            import chess
-            print(chess.__version__)
-            exit()
-
         if args.command is None or not hasattr(self, args.command):
             print('Unrecognized command')
             parser.print_help()
@@ -71,6 +65,11 @@ class Chess(object):
         # echo parameters back to user
         command = " ".join(sys.argv)
         logger.info("Running '{}'".format(command))
+
+        import chess
+        import fanc
+        logger.info("CHESS version: {}".format(chess.__version__))
+        logger.info("FAN-C version: {}".format(fanc.__version__))
 
         # use dispatch pattern to invoke method with same name
         getattr(self, args.command)([sys.argv[0]] + sys.argv[option_ix:])
