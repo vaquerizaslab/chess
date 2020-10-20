@@ -24,8 +24,8 @@ the `chess paper <SOME LINK>`, Figure 5.
 
 For this analysis, we will need only three input files for CHESS:
 
-1. The Hi-C data for the first sample
-2. The Hi-C data for the second sample
+1. Balanced Hi-C data for the first sample
+2. Balanced Hi-C data for the second sample
 3. The coordinates of the regions that should be compared in bedpe format.
 
 1. and 2. can be in `Juicer <https://github.com/aidenlab/juicer>`_,
