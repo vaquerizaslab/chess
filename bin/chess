@@ -147,6 +147,9 @@ class Chess(object):
                             "because they involve chromosomes "
                             "that are not present in the provided "
                             "contact data.").format(dropped))
+        if len(pairs) == 0:
+            logger.error("No valid region pairs found; aborting.")
+            exit()
 
         logger.info("Launching workers")
         m = mp.Manager()
