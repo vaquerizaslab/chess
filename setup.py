@@ -41,11 +41,11 @@ setup(
     install_requires=[
         'cython',
         'numpy>=1.8.0',
-        'fanc>=0.8.28',
+        'fanc>=0.9.4',
         'scikit-image',
         'future',
         'pathos',
-        'pandas',
+        'pandas>=1.1.3',
         'scipy',
         'intervaltree',
         'pybedtools',
