@@ -6,5 +6,7 @@
 CHESS is a tool for the comparison and automatic feature extraction for chromatin contact data,
 developed in the [Vaquerizas Lab](https://www.vaquerizaslab.org/).
 
+If you use CHESS in your research, please cite the [CHESS paper](https://www.nature.com/articles/s41588-020-00712-y).
+
 Please check out the [online documentation](https://chess-hic.readthedocs.io/en/latest/index.html)
 for detailed installation and usage instructions.

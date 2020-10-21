@@ -2,7 +2,7 @@
 Example analysis
 ****************
 
-CHESS has two typical use-cases, which are showcased in the publication (ADD LINK):
+CHESS has two typical use-cases, which are showcased in the `Publication <https://www.nature.com/articles/s41588-020-00712-y>`_:
 
 1. Finding genomic regions with differences in their chromatin conformation between
    two samples. This is useful for example for the identification of
@@ -20,7 +20,7 @@ This example illustrates how CHESS can help to identify genomic regions
 that differ in their chromatin conformation between two samples, by the
 example of samples from a `DLBCL <https://en.wikipedia.org/wiki/Diffuse_large_B-cell_lymphoma>`
 patient and a control person. The analysis of these data is also showcased in
-the `chess paper <SOME LINK>`, Figure 5.
+the `CHESS paper <https://www.nature.com/articles/s41588-020-00712-y>`_, Figure 5.
 
 For this analysis, we will need only three input files for CHESS:
 
