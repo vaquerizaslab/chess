@@ -38,13 +38,5 @@ and install CHESS manually. Make sure to have `cython` installed. The other depe
 .. code:: bash
 
   git clone https://github.com/vaquerizaslab/chess  # or download manually
-  pip install chess
-
-
-or
-
-.. code:: bash
-
-  git clone https://github.com/vaquerizaslab/chess  # or download manually
   cd chess
-  python setup.py install
+  pip install .
