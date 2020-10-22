@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.3.4]
+
+### Fixed
+- "ValueError: Image must contain only positive values" in `chess extract`
+
 ## [0.3.3]
 
 ### Added
