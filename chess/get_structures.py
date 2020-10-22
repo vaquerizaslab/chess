@@ -113,11 +113,12 @@ def extract_structures(
         or_matrix[where_are_NaNs] = 0.
         or_matrix[or_matrix == -inf] = 0.
         or_matrix[or_matrix == inf] = 0.
-        mean, std = np.mean(or_matrix), np.std(or_matrix)
-        thres1, thres2 = mean + 0.5 * std, mean - 0.5 * std
-        positive = np.where(or_matrix > thres1, or_matrix, 0.)
-        negative = np.where(or_matrix < thres2, or_matrix, 0.)
-        negative = np.abs(negative)
+        std = np.std(or_matrix)
+        # thres1, thres2 = mean + 0.5 * std, mean - 0.5 * std
+        # positive = np.where(or_matrix > thres1, or_matrix, 0.)
+        # negative = np.where(or_matrix < thres2, or_matrix, 0.)
+        positive = np.where(or_matrix > (0.5 * std), or_matrix, 0.)
+        negative = np.abs(np.where(or_matrix < -(0.5 * std), or_matrix, 0.))
 
         # denoise
         denoise_positive = restoration.denoise_bilateral(
