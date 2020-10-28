@@ -52,6 +52,19 @@ size of the analyzed regions and the target features.
 For now, some experimentation by the user is required, but we are planning to 
 release a guide to this in the future.
 
+This command will write two files into the output directory:
+gained_features.tsv and lost_features.tsv,
+for the gained and lost features in the query matrix compared to the reference,
+respectively.
+These files contain the information about the position, and the shape of the features.
+The first value of each row correspond to the region ID (same as in the `chess sim` output)
+the second to an ID of the feature. The following four values correspond to the
+position of the corners of the rectangle that contain the feature
+(xmin, xmax, ymin and ymax) in the region matrix.
+The following columns contain the contact values for the portion of the region
+matrix belonging to the feature in the query matrix (gained_features.tsv)
+or reference matrix (lost_features.tsv).
+
 .. argparse::
    :module: chess.commands
    :func: extract_parser
