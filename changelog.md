@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- Raise error if too small (<20 bins) regions are used in `chess sim` before running comparisons.
+
 ## [0.3.4]
 
 ### Fixed
