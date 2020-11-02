@@ -17,6 +17,10 @@ by ``chess sim`` if its intended use is to search a whole genome or a number
 of chromosomes for regions with differences in their chromatin conformation
 between two samples.
 
+The window size should not be smaller than 20x the bin size of the data
+that will be compared with :ref:`chess sim <chess-sim>`. We recommend 
+to use window sizes not smaller than 100x the bin size of the data.
+
 .. argparse::
    :module: chess.commands
    :func: pairs_parser
@@ -31,6 +35,10 @@ between two samples.
 ***************
 
 This command runs the comparisons between two sets of chromatin contact data.
+
+Please note that the size of the regions passed in the `pairs` file cannot
+be smaller than 20x the bin size of the data. We recommend to use regions
+spanning at least 100x the bin size of the data.
 
 .. argparse::
    :module: chess.commands
