@@ -124,6 +124,7 @@ class Chess(object):
                  "Files in sparse format can only be loaded if "
                  "--reference-regions is specified."))
             exit()
+        logger.info('Loading query contact data')
         try:
             query_edges, query_region_trees, query_regions = loading_function(
                 query_matrix_file, query_regions_file)
@@ -135,6 +136,11 @@ class Chess(object):
                  "Files in sparse format can only be loaded if "
                  "--query-regions is specified."))
             exit()
+
+        reference_bin_size = max(
+            r.end - r.start + 1 for r in reference_regions)
+        query_bin_size = max(
+            r.end - r.start + 1 for r in query_regions)
 
         logger.info('Loading region pairs')
         pairs, dropped = load_pairs_for_chroms(
@@ -149,6 +155,35 @@ class Chess(object):
                             "contact data.").format(dropped))
         if len(pairs) == 0:
             logger.error("No valid region pairs found; aborting.")
+            exit()
+
+        reference_max_region_size = max(
+            [p[1].end - p[1].start + 1 for p in pairs])
+        query_max_region_size = max(
+            [p[2].end - p[2].start + 1 for p in pairs])
+        max_reference_region_span = int(
+            reference_max_region_size / reference_bin_size)
+        max_query_region_span = int(
+            query_max_region_size / query_bin_size)
+
+        # Early exit if the regions are too small.
+        if max_reference_region_span < 20:
+            logger.error(
+                "All regions need to span at least 20 bins. "
+                "The provided reference regions span at most {} bins. "
+                "Please try again with larger regions or a smaller bin size. "
+                "The bin size of the input data has been detected to be {} bp."
+                .format(max_reference_region_span, reference_bin_size)
+                )
+            exit()
+        elif max_query_region_span < 20:
+            logger.error(
+                "All regions need to span at least 20 bins. "
+                "The provided query regions span at most {} bins. "
+                "Please try again with larger regions or a smaller bin size. "
+                "The bin size of the input data has been detected to be {} bp."
+                .format(max_query_region_span, query_bin_size)
+                )
             exit()
 
         logger.info("Launching workers")
