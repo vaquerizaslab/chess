@@ -1,6 +1,8 @@
 #!/usr/bin/env python
-# from argparse import ArgumentParser
-# import os
+
+import matplotlib
+matplotlib.use('pdf')
+
 import logging
 from os import path
 from collections import defaultdict
