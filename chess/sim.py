@@ -6,7 +6,7 @@ import numpy as np
 from skimage.transform import resize
 from skimage.metrics import structural_similarity
 from numpy.lib.stride_tricks import as_strided
-from .helpers import sub_matrix_from_edges_dict
+from .helpers import sub_matrix_from_edges_dict, load_matrix_fanc
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -185,6 +185,67 @@ def chunk_comparison_worker(input_queue, output_queue,
 
                 pair_ix, ssim, sn = compare_matrix_pair(reference, reference_region,
                                                         query, query_region,
+                                                        pair_ix=pair_ix,
+                                                        min_bins=min_bins,
+                                                        keep_unmappable_bins=keep_unmappable_bins,
+                                                        absolute_window_size=absolute_window_size,
+                                                        relative_window_size=relative_window_size,
+                                                        mappability_cutoff=mappability_cutoff,
+                                                        default_value=default_value,
+                                                        compute_sn=compute_sn)
+                results.append([pair_ix, ssim, sn])
+            output_queue.put(results)
+    except Exception as e:
+        logger.error("Worker {} encountered a problem: {}".format(worker_id, e))
+        output_queue.put(e)
+
+    logger.debug("Worker {} exited gracefully".format(worker_id))
+
+
+def on_demand_chunk_comparison_worker(input_queue, output_queue,
+                                      reference_edges_file, reference_regions_file,
+                                      query_edges_file, query_regions_file,
+                                      min_bins=20,
+                                      keep_unmappable_bins=False,
+                                      absolute_window_size=None,
+                                      relative_window_size=1.,
+                                      mappability_cutoff=0.1,
+                                      default_value=1, oe=True):
+
+    reference_matrix = load_matrix_fanc(reference_edges_file, reference_regions_file)
+    query_matrix = load_matrix_fanc(query_edges_file, query_regions_file)
+
+    worker_id = uuid.uuid4()
+    previous_reference = [None, (None, None)]
+    previous_query = [None, (None, None)]
+    try:
+        while True:
+            data = input_queue.get(block=True)
+            if data is None:
+                break
+            chunk, compute_sn = data
+
+            results = []
+            for pair in chunk:
+                pair_ix, reference_region, query_region = pair
+                try:
+                    if previous_reference[0] is not None and reference_region == previous_reference[0]:
+                        ref_sub = previous_reference[1]
+                    else:
+                        ref_sub = reference_matrix.matrix((reference_region, reference_region), oe=oe)
+                        previous_reference = [reference_region, ref_sub]
+
+                    if previous_query[0] is not None and query_region == previous_query[0]:
+                        query_sub = previous_query[1]
+                    else:
+                        query_sub = query_matrix.matrix((query_region, query_region), oe=oe)
+                        previous_query = [query_region, query_sub]
+                except ValueError:
+                    results.append([pair_ix, np.nan, np.nan])
+                    continue
+
+                pair_ix, ssim, sn = compare_matrix_pair(ref_sub, reference_region,
+                                                        query_sub, query_region,
                                                         pair_ix=pair_ix,
                                                         min_bins=min_bins,
                                                         keep_unmappable_bins=keep_unmappable_bins,
