@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Unreleased
 
+### Fixed
+- Cooler file loading time via fanc, significant speed up in fanc 0.9.8
+
 ### Changed
 - Switch to matplotlib 'pdf' backend
 
