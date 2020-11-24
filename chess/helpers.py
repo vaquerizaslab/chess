@@ -457,3 +457,11 @@ def load_oe_contacts(matrix_file, regions_file=None):
         except AssertionError:
             raise ValueError
     return edges, region_trees, regions
+
+
+def load_matrix_fanc(matrix_file, regions_file=None):
+    if regions_file is None:
+        matrix = fanc.load(matrix_file)
+    else:
+        matrix = fanc.RegionMatrixWrapper(regions_file, matrix_file)
+    return matrix
