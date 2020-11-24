@@ -83,8 +83,8 @@ class Chess(object):
         args = parser.parse_args(argv[2:])
 
         from chess.helpers import load_pairs_for_chroms, load_regions, \
-            GenomicRegion, chunks, load_contacts, load_oe_contacts
-        from chess.sim import chunk_comparison_worker
+            GenomicRegion, chunks, load_contacts, load_oe_contacts, load_matrix_fanc
+        from chess.sim import on_demand_chunk_comparison_worker
         import multiprocessing as mp
         import numpy as np
         from collections import defaultdict
@@ -111,43 +111,31 @@ class Chess(object):
         logger.debug('Parameters:')
         logger.debug(args)
 
-        logger.info('Loading reference contact data')
-        loading_function = load_oe_contacts if is_oe else load_contacts
-        try:
-            reference_edges, reference_region_trees, reference_regions = loading_function(
-                reference_matrix_file, reference_regions_file)
-        except ValueError as error:
-            logger.error(error)
-            logger.error(
-                ("Reference contact data could not be loaded. "
-                 "Please specify a valid input file. "
-                 "Files in sparse format can only be loaded if "
-                 "--reference-regions is specified."))
-            exit()
-        logger.info('Loading query contact data')
-        try:
-            query_edges, query_region_trees, query_regions = loading_function(
-                query_matrix_file, query_regions_file)
-        except ValueError as error:
-            logger.error(error)
-            logger.error(
-                ("Query contact data could not be loaded. "
-                 "Please specify a valid input file. "
-                 "Files in sparse format can only be loaded if "
-                 "--query-regions is specified."))
-            exit()
+        logger.info('Loading reference regions')
+        if reference_regions_file is not None:
+            reference_matrix = load_matrix_fanc([], reference_regions_file)
+        else:
+            reference_matrix = load_matrix_fanc(reference_matrix_file)
+
+        logger.info('Loading query regions')
+        if query_regions_file is not None:
+            query_matrix = load_matrix_fanc([], query_regions_file)
+        else:
+            query_matrix = load_matrix_fanc(query_matrix_file)
 
         reference_bin_size = max(
-            r.end - r.start + 1 for r in reference_regions)
+            r.end - r.start + 1 for r in reference_matrix.regions(lazy=True))
         query_bin_size = max(
-            r.end - r.start + 1 for r in query_regions)
+            r.end - r.start + 1 for r in query_matrix.regions(lazy=True))
 
         logger.info('Loading region pairs')
         pairs, dropped = load_pairs_for_chroms(
             pairs_file,
             set().union(
-                set(reference_region_trees.keys()),
-                set(query_region_trees.keys())))
+                set(reference_matrix.chromosomes()),
+                set(query_matrix.chromosomes())
+            )
+        )
         if dropped > 0:
             logger.warning(("{} region pairs have been dropped, "
                             "because they involve chromosomes "
@@ -194,18 +182,19 @@ class Chess(object):
         pool = None
         try:
             pool = mp.Pool(threads,
-                           chunk_comparison_worker,
+                           on_demand_chunk_comparison_worker,
                            (input_queue,
                             output_queue,
-                            reference_edges,
-                            reference_region_trees,
-                            query_edges,
-                            query_region_trees,
+                            reference_matrix_file,
+                            reference_regions_file,
+                            query_matrix_file,
+                            query_regions_file,
                             20,
                             args.keep_unmappable_bins,
                             args.absolute_windowsize,
                             args.relative_windowsize,
-                            args.mappability_cutoff))
+                            args.mappability_cutoff,
+                            not is_oe))
 
             logger.info("Submitting pairs for comparison")
             submitted_counter = 0
@@ -215,7 +204,7 @@ class Chess(object):
 
             ssim_results = dict()
             all_ssim = []
-            for i in range(submitted_counter):
+            for i in progressbar(range(submitted_counter)):
                 out = output_queue.get(block=True)
                 if isinstance(out, Exception):
                     raise out
@@ -271,13 +260,13 @@ class Chess(object):
                 for pair_id, reference_region, query_region in progressbar(pairs):
                     if background_query:
                         chromosome_ends = defaultdict(int)
-                        for r in query_regions:
+                        for r in query_matrix.regions():
                             chromosome_ends[r.chromosome] = max(chromosome_ends[r.chromosome], r.end)
 
                         background_regions = []
                         query_size = query_region.end - query_region.start
                         # generate background regions from query genome
-                        for region in query_regions:
+                        for region in query_matrix.regions():
                             if limit_background and region.chromosome != query_region.chromosome:
                                 continue
 
