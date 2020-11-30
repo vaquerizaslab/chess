@@ -41,7 +41,7 @@ setup(
     install_requires=[
         'cython',
         'numpy>=1.8.0',
-        'fanc>=0.9.8',
+        'fanc>=0.9.9',
         'scikit-image',
         'future',
         'pathos',
