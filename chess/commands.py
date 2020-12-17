@@ -12,7 +12,6 @@ def chess_parser():
             oe              Transform a Hi-C matrix to an observed/expected matrix
             pairs           Make window pairs for chess genome scan
             background   Generate background region BED files
-            filter          Filter output of chess sim and save as BED file
             extract         Extract specific regions that are significantly different
             crosscorrelate  Get structural clusters from the extracted submatrices
 
