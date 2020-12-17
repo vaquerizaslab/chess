@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Removed
+- Info about `chess filter` in the cli help.
+
 ## [0.3.6]
 
 ### Fixed
@@ -34,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Do output directory checks in chess extract and chess crosscorrelate
 
 ### Removed
-- chess filter
+- `chess filter`
 
 ## [0.3.1]
 
