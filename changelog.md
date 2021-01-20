@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - Info about `chess filter` in the cli help.
 
+### Changed
+- `chess pairs` now produces 0-based ranges.
+
 ## [0.3.6]
 
 ### Fixed
