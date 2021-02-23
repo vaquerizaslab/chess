@@ -108,8 +108,10 @@ def sim_parser():
         'pairs',
         type=str,
         help='Region pairs to compare. '
-             'Expected to be in bedpe format with chrom1, start1, ... '
-             'corresponding to reference and chrom2, start2, ... to query.')
+             'Expected to be in 10 column BEDPE format as defined in the BEDTools docs: '
+             'https://bedtools.readthedocs.io/en/latest/content/general-usage.html, with chrom1, start1, etc '
+             'corresponding to reference and chrom2, start2, etc to query. The "score" column is not used, but should '
+             'be present (can be "." or another placeholder value). All other columns are required.')
 
     parser.add_argument(
         'out',
@@ -219,7 +221,9 @@ def pairs_parser():
         description='Make window pairs for CHESS genome scan. '
                     'Write all positions of a sliding window of specified '
                     'size with specified step in the specified genome to '
-                    'the outfile which can be directly used to run CHESS sim.',
+                    'the outfile which can be directly used to run CHESS sim.'
+                    'Output will be in 10 column BEDPE format as defined in the BEDTools docs: '
+                    'https://bedtools.readthedocs.io/en/latest/content/general-usage.html.',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument(
@@ -228,7 +232,7 @@ def pairs_parser():
         help='UCSC genome identifier (as recognized by pybedtools), '
              'or path to tab-separated chrom sizes file with columns '
              '<chromosome name> <chromosome size>. '
-             'Will use the path only if no USCS entry with that name is found'
+             'Will use the path only if no UCSC entry with that name is found'
              ', or --file-input is specified.')
 
     parser.add_argument(
@@ -250,7 +254,7 @@ def pairs_parser():
         '--file-input',
         action='store_true',
         default=False,
-        help='Will not check for USCS entry of genome'
+        help='Will not check for UCSC entry of genome'
              'input with pybedtools if set'
         )
 
@@ -310,10 +314,11 @@ def extract_parser():
     parser.add_argument(
         'pairs',
         type=str,
-        help='Region pairs that have been identified to '
-             'contain structural differences. Expected to be in '
-             'bedpe format with chrom1, start1, ... '
-             'corresponding to reference and chrom2, start2, ... to query.')
+        help='Region pairs that have been identified to contain structural differences.'
+             'Expected to be in 10 column BEDPE format as defined in the BEDTools docs: '
+             'https://bedtools.readthedocs.io/en/latest/content/general-usage.html, with chrom1, start1, etc '
+             'corresponding to reference and chrom2, start2, etc to query. The "score" column is not used, but should '
+             'be present (can be "." or another placeholder value). All other columns are required.')
 
     parser.add_argument(
         'reference_contacts',
@@ -410,10 +415,11 @@ def crosscorrelate_parser():
     parser.add_argument(
         'pairs',
         type=str,
-        help='Region pairs that have been identified to '
-             'contain structural differences. Expected to be in '
-             'bedpe format with chrom1, start1, ... '
-             'corresponding to reference and chrom2, start2, ... to query.')
+        help='Region pairs that have been identified to contain structural differences. '
+             'Expected to be in 10 column BEDPE format as defined in the BEDTools docs: '
+             'https://bedtools.readthedocs.io/en/latest/content/general-usage.html, with chrom1, start1, etc '
+             'corresponding to reference and chrom2, start2, etc to query. The "score" column is not used, but should '
+             'be present (can be "." or another placeholder value). All other columns are required.')
 
     parser.add_argument(
         'outdir',
