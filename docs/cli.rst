@@ -47,7 +47,7 @@ spanning at least 100x the bin size of the data.
    :nodescription:
 
    
-.. _chess-extract
+.. _chess-extract:
 
 *****************
 ``chess extract``
@@ -80,7 +80,7 @@ or reference matrix (lost_features.tsv).
    :nodescription:
 
 
-.. _chess-crosscorrelate
+.. _chess-crosscorrelate:
 
 ************************
 ``chess crosscorrelate``
