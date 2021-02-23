@@ -175,7 +175,8 @@ windows.
 Despite the correlation, different window sizes can yield different results
 in some regions:
 
-* Larger windows cover more and longer long-range interactions;
+* Larger windows cover more and longer long-range interactions:
+
   - If you are interested in changes of large effects stretching over 
     long genomic distances, choose a larger window size.
   - However, long-range interactions tend to be more noisy.
@@ -183,7 +184,8 @@ in some regions:
     pass a given signal-to-noise threshold. If your analysis does not return
     any regions of strong dissimilarity above your signal-to-noise threshold,
     lower the threshold or try a smaller window size.
-* The larger the window, the smaller the effect of small changes;
-  - If you are interested in finding changes in single TAD boundaries, 
-    choose a small window. Large windows will cover multiple boundaries 
+* The larger the window, the smaller the effect of small changes:
+
+  - If you are interested in finding changes in single TAD boundaries,
+    choose a small window. Large windows will cover multiple boundaries
     and the score of the window will reflect their combined change.
