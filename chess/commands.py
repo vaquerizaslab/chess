@@ -22,12 +22,8 @@ def chess_parser():
         usage=textwrap.dedent(usage)
     )
 
-    parser.add_argument(
-        '--version', dest='print_version',
-        action='store_true',
-        help='Print version information'
-    )
-    parser.set_defaults(print_version=False)
+    from .version import __version__
+    parser.add_argument('--version', action='version', version=f'CHESS {__version__}')
 
     parser.add_argument(
         '--verbose', '-v', dest='verbosity',
