@@ -178,7 +178,7 @@ def extract_structures(
             label_x2, rot_reference, w2, pos_reference, area, pair_ix)
 
 
-def rotate_feature(x, y, window_size):
+def rotate_feature(x, y, window_size, zoom_factor=1.0/0.7):
     """Rotate a single x,y coordinate within a region by -45 degrees.
     This allows conversion of coordinates from chess extract output to genomic bins.
 
@@ -202,7 +202,7 @@ def rotate_feature(x, y, window_size):
     --------
     >>> rotate_feature(50, 50, 100) # stays in center
     (50, 50)
-    >>> rotate_feature(20, 30, 60) # vertical center -> diagonal
+    >>> rotate_feature(20, 30, 60, zoom_factor=1) # vertical center -> diagonal
     (23, 23)
     """
     # NOTE: There will be some rounding errors when rotating the system. Not sure
@@ -217,7 +217,7 @@ def rotate_feature(x, y, window_size):
     # Get rotation center
     center = window_size / 2
     # Substract rotation center and rotate
-    x_r, y_r = rot @ np.array([x - center, y - center])
+    x_r, y_r = zoom_factor * rot @ np.array([x - center, y - center])
     # Add back rotation center
     x_r += center
     y_r += center
