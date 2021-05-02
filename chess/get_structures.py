@@ -176,3 +176,92 @@ def extract_structures(
             label_x1, rot_query, w1, pos_query, area, pair_ix)
         pos_reference = get_info_feature(
             label_x2, rot_reference, w2, pos_reference, area, pair_ix)
+
+
+def rotate_feature(x, y, window_size, zoom_factor=1.0/0.7):
+    """Rotate a single x,y coordinate within a region by -45 degrees.
+    This allows conversion of coordinates from chess extract output to genomic bins.
+
+    Parameters
+    ----------
+    x : int
+        The x coordinate of a single point within the window, as found in the
+        output of chess extract
+    y : int
+        The y coordinate of a single point within the window, as found in the
+        output of chess extract.
+    window_size : int
+        The size of the window region.
+
+    Returns
+    -------
+    x_r, y_r : tuple of int
+        The rotated coordinates.
+    
+    Examples
+    --------
+    >>> rotate_feature(50, 50, 100) # stays in center
+    (50, 50)
+    >>> rotate_feature(20, 30, 60, zoom_factor=1) # vertical center -> diagonal
+    (23, 23)
+    """
+    # NOTE: There will be some rounding errors when rotating the system. Not sure
+    # what is the best way to handle them, for now I just round to the closest int.
+    
+    # Convert degree to radians
+    theta = np.radians(-45)
+    # Compute rotation matrix
+    rot = np.array(
+        [[np.cos(theta), np.sin(theta)], [-np.sin(theta), np.cos(theta)]]
+    )
+    # Get rotation center
+    center = window_size / 2
+    # Substract rotation center and rotate
+    x_r, y_r = zoom_factor * rot @ np.array([x - center, y - center])
+    # Add back rotation center
+    x_r += center
+    y_r += center
+    return round(x_r), round(y_r)
+
+
+def get_feature_coords(coords, win_size, win_bp_start, res):
+    """Get basepair coordinates of a feature by rotating it and converting
+    bins to coordinates
+
+    Parameters
+    ----------
+    coords : tuple of int
+        The coordinate of the feature within the window, as found in the
+        output of chess extract: (xmin, xmax, ymin, ymax)
+    win_size : int
+        The size of the window region in bins.
+    win_bp_start : int
+        The start coordinate of the window in base pairs.
+    res : int
+        The resolution of the Hi-C matrix, i.e. the number of basepairs
+        per bin.
+
+    Returns
+    -------
+    x_coords, y_coords : tuple of lists of int
+        The genomic coordinates of the feature on both axes, in
+        the format: ([x_start, x_end], [y_start, y_end])
+    
+    Examples
+    --------
+    >>> chess_coords = (103, 108, 85, 90)
+    >>> get_feature_coords(chess_coords, 201, 98000001, res=50000)
+    ([103500001, 103650001], [102550001, 102750001])
+    """
+    # Rotate input coordinates by 45 degrees to get genomic bins
+    xmin, xmax, ymin, ymax = coords
+    xmin_r, ymin_r = rotate_feature(ymin, ymin, win_size)
+    xmin_r, ymax_r = rotate_feature(xmin, ymax, win_size)
+    xmax_r, ymin_r = rotate_feature(xmin, ymin, win_size)
+
+
+    # Generate new genomic coordinates
+    x_coords = [xmin_r * res + win_bp_start, xmax_r * res + win_bp_start]
+    y_coords = [ymin_r * res + win_bp_start, ymax_r * res + win_bp_start]
+
+    return x_coords, y_coords
