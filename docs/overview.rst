@@ -19,6 +19,6 @@ The level of noise in the Hi-C matrices used as input to CHESS will depend on th
 well as the sequencing depth of the input samples. Therefore, SN and SSIM distributions are not comparable across
 comparisons that use different parameters (window size, resolution, sequencing depth). For ease of interpretation of
 the output, we advise using Hi-C datasets with similar sequencing depth, especially if you are performing multiple
-pairwise comparisons. See `our preprint <https://www.biorxiv.org/>`_)
+pairwise comparisons. See `our preprint <https://www.biorxiv.org/content/10.1101/2021.10.18.464422v1>`_)
 for more information, and the FAQ for further advice on selecting SSIM and SN thresholds.
 
