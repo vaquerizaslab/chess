@@ -365,12 +365,13 @@ def compare_matrix_pair(reference,
     window_size = max(window_size, 3)
 
     # actual comparison
-    r_range = reference.max() - reference.min()
-    q_range = query.max() - query.min()
+    dmax = max(reference.max(), query.max())
+    dmin = min(reference.min(), query.min())
+    drange = dmax - dmin
     curr_ssim = structural_similarity(reference,
                                       query,
                                       win_size=window_size,
-                                      data_range=max(r_range, q_range))
+                                      data_range=drange)
     if compute_sn:
         curr_sn = SN(reference, query)
     else:
