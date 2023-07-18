@@ -30,8 +30,7 @@ def SN(M1, M2, size=7):
     return float(SN)
 
 
-def filter_uniform_filter(M, size=7, no_data_val=None,
-                          func=np.nanmean):
+def filter_uniform_filter(M, size=7, no_data_val=None, func=np.nanmean):
     """Apply func to sliding window on input matrix.
 
     Adaption from:
@@ -51,8 +50,7 @@ def filter_uniform_filter(M, size=7, no_data_val=None,
     assert M.dtype == np.dtype('float64'), 'Input must have dtype(float64)'
     rows, cols = M.shape
 
-    padded_A = np.empty(shape=(rows + size-1,
-                               cols + size-1),
+    padded_A = np.empty(shape=(rows + size - 1, cols + size - 1),
                         dtype=M.dtype)
     padded_A[:] = np.nan
     rows_pad, cols_pad = padded_A.shape
@@ -63,11 +61,11 @@ def filter_uniform_filter(M, size=7, no_data_val=None,
 
     upleft_data_start = int((size - 1) / 2)
     rl, cl = rows_pad - upleft_data_start, cols_pad - upleft_data_start
-    padded_A[upleft_data_start: rl, upleft_data_start: cl] = M.copy()
+    padded_A[upleft_data_start:rl, upleft_data_start:cl] = M.copy()
 
     n, m = M.shape
     strided_data = as_strided(padded_A, (n, m, size, size),
-                              padded_A.strides+padded_A.strides)
+                              padded_A.strides + padded_A.strides)
     strided_data = strided_data.copy().reshape((n, m, size**2))
 
     return func(strided_data, axis=2)
@@ -104,9 +102,12 @@ def remove_rows(m, target_rows):
     return m_removed
 
 
-def comparison_worker(input_queue, output_queue,
-                      reference_edges, reference_regions,
-                      query_edges, query_regions,
+def comparison_worker(input_queue,
+                      output_queue,
+                      reference_edges,
+                      reference_regions,
+                      query_edges,
+                      query_regions,
                       min_bins=20,
                       keep_unmappable_bins=False,
                       absolute_window_size=None,
@@ -121,27 +122,34 @@ def comparison_worker(input_queue, output_queue,
                 break
             pair, compute_sn = data
 
-            pair_ix, ssim, sn = compare_pair(pair,
-                                             reference_edges, reference_regions,
-                                             query_edges, query_regions,
-                                             min_bins=min_bins,
-                                             keep_unmappable_bins=keep_unmappable_bins,
-                                             absolute_window_size=absolute_window_size,
-                                             relative_window_size=relative_window_size,
-                                             mappability_cutoff=mappability_cutoff,
-                                             default_value=default_value,
-                                             compute_sn=compute_sn)
+            pair_ix, ssim, sn = compare_pair(
+                pair,
+                reference_edges,
+                reference_regions,
+                query_edges,
+                query_regions,
+                min_bins=min_bins,
+                keep_unmappable_bins=keep_unmappable_bins,
+                absolute_window_size=absolute_window_size,
+                relative_window_size=relative_window_size,
+                mappability_cutoff=mappability_cutoff,
+                default_value=default_value,
+                compute_sn=compute_sn)
             output_queue.put((pair_ix, ssim, sn))
     except Exception as e:
-        logger.error("Worker {} encountered a problem: {}".format(worker_id, e))
+        logger.error("Worker {} encountered a problem: {}".format(
+            worker_id, e))
         output_queue.put(e)
 
     logger.info("Worker {} exited gracefully".format(worker_id))
 
 
-def chunk_comparison_worker(input_queue, output_queue,
-                            reference_edges, reference_regions,
-                            query_edges, query_regions,
+def chunk_comparison_worker(input_queue,
+                            output_queue,
+                            reference_edges,
+                            reference_regions,
+                            query_edges,
+                            query_regions,
                             min_bins=20,
                             keep_unmappable_bins=False,
                             absolute_window_size=None,
@@ -162,56 +170,70 @@ def chunk_comparison_worker(input_queue, output_queue,
             for pair in chunk:
                 pair_ix, reference_region, query_region = pair
                 try:
-                    if previous_reference[0] is not None and reference_region == previous_reference[0]:
+                    if previous_reference[
+                            0] is not None and reference_region == previous_reference[
+                                0]:
                         reference, ref_rs = previous_reference[1]
                     else:
-                        reference, ref_rs = sub_matrix_from_edges_dict(reference_edges,
-                                                                       reference_regions,
-                                                                       reference_region,
-                                                                       default_weight=default_value)
-                        previous_reference = [reference_region, (reference, ref_rs)]
+                        reference, ref_rs = sub_matrix_from_edges_dict(
+                            reference_edges,
+                            reference_regions,
+                            reference_region,
+                            default_weight=default_value)
+                        previous_reference = [
+                            reference_region, (reference, ref_rs)
+                        ]
 
-                    if previous_query[0] is not None and query_region == previous_query[0]:
+                    if previous_query[
+                            0] is not None and query_region == previous_query[
+                                0]:
                         query, qry_rs = previous_query[1]
                     else:
-                        query, qry_rs = sub_matrix_from_edges_dict(query_edges,
-                                                                   query_regions,
-                                                                   query_region,
-                                                                   default_weight=default_value)
+                        query, qry_rs = sub_matrix_from_edges_dict(
+                            query_edges,
+                            query_regions,
+                            query_region,
+                            default_weight=default_value)
                         previous_query = [query_region, (query, qry_rs)]
                 except ValueError:
                     results.append([pair_ix, np.nan, np.nan])
                     continue
 
-                pair_ix, ssim, sn = compare_matrix_pair(reference, reference_region,
-                                                        query, query_region,
-                                                        pair_ix=pair_ix,
-                                                        min_bins=min_bins,
-                                                        keep_unmappable_bins=keep_unmappable_bins,
-                                                        absolute_window_size=absolute_window_size,
-                                                        relative_window_size=relative_window_size,
-                                                        mappability_cutoff=mappability_cutoff,
-                                                        default_value=default_value,
-                                                        compute_sn=compute_sn)
+                pair_ix, ssim, sn = compare_matrix_pair(
+                    reference,
+                    reference_region,
+                    query,
+                    query_region,
+                    pair_ix=pair_ix,
+                    min_bins=min_bins,
+                    keep_unmappable_bins=keep_unmappable_bins,
+                    absolute_window_size=absolute_window_size,
+                    relative_window_size=relative_window_size,
+                    mappability_cutoff=mappability_cutoff,
+                    default_value=default_value,
+                    compute_sn=compute_sn)
                 results.append([pair_ix, ssim, sn])
             output_queue.put(results)
     except Exception as e:
-        logger.error("Worker {} encountered a problem: {}".format(worker_id, e))
+        logger.error("Worker {} encountered a problem: {}".format(
+            worker_id, e))
         output_queue.put(e)
 
     logger.debug("Worker {} exited gracefully".format(worker_id))
 
 
-def compare_pair(pair, reference_edges, reference_regions,
-                 query_edges, query_regions,
+def compare_pair(pair,
+                 reference_edges,
+                 reference_regions,
+                 query_edges,
+                 query_regions,
                  min_bins=20,
                  keep_unmappable_bins=False,
                  absolute_window_size=None,
                  relative_window_size=1.,
                  mappability_cutoff=0.1,
                  default_value=1,
-                 compute_sn=True
-                 ):
+                 compute_sn=True):
     """Run comparison of given Hi-C matrices without any background model.
 
     Compare given submatrices of the full Hi-C matrices in sampleID2hic.
@@ -254,15 +276,23 @@ def compare_pair(pair, reference_edges, reference_regions,
     """
     pair_ix, reference_region, query_region = pair
     try:
-        reference, ref_rs = sub_matrix_from_edges_dict(reference_edges, reference_regions,
-                                                       reference_region, default_weight=default_value)
-        query, qry_rs = sub_matrix_from_edges_dict(query_edges, query_regions,
-                                                   query_region, default_weight=default_value)
+        reference, ref_rs = sub_matrix_from_edges_dict(
+            reference_edges,
+            reference_regions,
+            reference_region,
+            default_weight=default_value)
+        query, qry_rs = sub_matrix_from_edges_dict(
+            query_edges,
+            query_regions,
+            query_region,
+            default_weight=default_value)
     except ValueError:
         return pair_ix, np.nan, np.nan
 
-    return compare_matrix_pair(reference, reference_region,
-                               query, query_region,
+    return compare_matrix_pair(reference,
+                               reference_region,
+                               query,
+                               query_region,
                                pair_ix=pair_ix,
                                min_bins=min_bins,
                                keep_unmappable_bins=keep_unmappable_bins,
@@ -273,8 +303,11 @@ def compare_pair(pair, reference_edges, reference_regions,
                                compute_sn=compute_sn)
 
 
-def compare_matrix_pair(reference, reference_region,
-                        query, query_region, pair_ix=None,
+def compare_matrix_pair(reference,
+                        reference_region,
+                        query,
+                        query_region,
+                        pair_ix=None,
                         min_bins=20,
                         keep_unmappable_bins=False,
                         absolute_window_size=None,
@@ -332,7 +365,13 @@ def compare_matrix_pair(reference, reference_region,
     window_size = max(window_size, 3)
 
     # actual comparison
-    curr_ssim = structural_similarity(reference, query, win_size=window_size)
+    dmax = max(reference.max(), query.max())
+    dmin = min(reference.min(), query.min())
+    drange = dmax - dmin
+    curr_ssim = structural_similarity(reference,
+                                      query,
+                                      win_size=window_size,
+                                      data_range=drange)
     if compute_sn:
         curr_sn = SN(reference, query)
     else:
@@ -341,9 +380,12 @@ def compare_matrix_pair(reference, reference_region,
     return pair_ix, curr_ssim, curr_sn
 
 
-def compare_structures(reference_edges, reference_regions,
-                       query_edges, query_regions,
-                       pairs, worker_ID,
+def compare_structures(reference_edges,
+                       reference_regions,
+                       query_edges,
+                       query_regions,
+                       pairs,
+                       worker_ID,
                        min_bins=20,
                        keep_unmappable_bins=False,
                        absolute_window_size=None,
@@ -394,15 +436,18 @@ def compare_structures(reference_edges, reference_regions,
     no_pass = set()
 
     for pair in pairs:
-        pair_ix, ssim, sn = compare_pair(pair,
-                                         reference_edges, reference_regions,
-                                         query_edges, query_regions,
-                                         min_bins=min_bins,
-                                         keep_unmappable_bins=keep_unmappable_bins,
-                                         absolute_window_size=absolute_window_size,
-                                         relative_window_size=relative_window_size,
-                                         mappability_cutoff=mappability_cutoff,
-                                         default_value=default_value)
+        pair_ix, ssim, sn = compare_pair(
+            pair,
+            reference_edges,
+            reference_regions,
+            query_edges,
+            query_regions,
+            min_bins=min_bins,
+            keep_unmappable_bins=keep_unmappable_bins,
+            absolute_window_size=absolute_window_size,
+            relative_window_size=relative_window_size,
+            mappability_cutoff=mappability_cutoff,
+            default_value=default_value)
         if np.isnan(ssim):
             no_pass.add(pair_ix)
             results[pair_ix] = (np.nan, np.nan)
